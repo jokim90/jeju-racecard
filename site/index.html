@@ -346,10 +346,9 @@ html[lang="ko"] .navtabs a{font-size:15px}
 .hero .sub{color:var(--gold);font-size:clamp(18px,2.6vw,28px);font-weight:600;margin-top:6px}
 .hero .cta{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap;justify-content:flex-start}
 @media (max-width:720px){
-  .hero{display:grid;grid-template-columns:100%;height:auto;min-height:0;padding:0;background:var(--navy)}
-  .hero::before{content:"";display:block;width:100%;aspect-ratio:16/10;background:linear-gradient(180deg,rgba(32,51,100,.28) 0%,rgba(32,51,100,.22) 45%,rgba(32,51,100,.75) 85%,var(--navy) 100%),url("hero.jpg") 58% 35%/cover no-repeat}
-  .hero::after{display:none}
-  .hero .ht{padding:18px 20px 26px;text-shadow:none;gap:4px}
+  .hero{height:min(78vh,620px);background-position:56% 42%;align-items:flex-end;padding:0 20px 28px}
+  .hero::after{background:linear-gradient(180deg,rgba(10,16,32,.05) 0%,rgba(10,16,32,.15) 45%,rgba(10,16,32,.78) 100%)}
+  .hero .ht{gap:4px}
   .hero .yr{font-size:30px}.hero h1{font-size:46px}.hero .sub{font-size:17px}
 }
 .hero .cta a{font-family:var(--cond);font-style:italic;font-weight:800;text-transform:uppercase;font-size:18px;letter-spacing:.04em;padding:10px 20px;border-radius:4px;text-decoration:none;color:#111;background:var(--gold)}
