@@ -1,0 +1,83 @@
+name: 데이터 갱신 및 배포
+
+on:
+  schedule:
+    - cron: "50 20 * * *"   # 매일 05:50 (한국시간)
+    - cron: "50 11 * * 5,6,0" # 금·토·일 20:50 (한국시간), 경주 결과 반영
+  workflow_dispatch:
+    inputs:
+      race_dt:
+        description: "경주일자 YYYYMMDD (비우면 오늘)"
+        required: false
+  push:
+    branches: [main]
+    paths: ["site/**"]
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+env:
+  TZ: Asia/Seoul
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 공공데이터포털에서 수집
+        if: github.event_name != 'push'
+        env:
+          JEJU_API_KEY: ${{ secrets.JEJU_API_KEY }}
+        run: |
+          DT="${{ github.event.inputs.race_dt }}"
+          [ -z "$DT" ] && DT=$(date +%Y%m%d)
+          python collector/jeju_collect.py "$DT" --out /tmp/new.json
+
+      - name: 받은 데이터가 비어 있지 않을 때만 교체
+        if: github.event_name != 'push'
+        run: |
+          python - <<'EOF'
+          import json, shutil, sys
+          j = json.load(open("/tmp/new.json", encoding="utf-8"))
+          n = sum(len(j.get(k) or []) for k in ("sheet", "races", "results"))
+          if n == 0:
+              print("::warning::새로 받은 데이터가 비어 있어 기존 latest.json을 유지합니다.")
+              sys.exit(0)
+          shutil.copy("/tmp/new.json", "site/latest.json")
+          print("latest.json 교체:", {k: len(v) for k, v in j.items() if isinstance(v, list)})
+          EOF
+
+      - name: latest.json 저장소에 기록
+        if: github.event_name != 'push'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add site/latest.json
+          git diff --cached --quiet || git commit -m "데이터 갱신 $(date '+%Y-%m-%d %H:%M')"
+          git push
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: update
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
