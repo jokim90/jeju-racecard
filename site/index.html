@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="ko">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>제주경마 레이스카드</title>
+<title>Jeju Racing · Race Card</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Barlow+Condensed:ital,wght@0,600;0,800;1,600;1,800&family=IBM+Plex+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@500&display=swap">
 <style>
@@ -399,8 +399,8 @@ html[lang="ko"] .navtabs a{font-size:15px}
       <a href="#/card" data-r="card"></a><a href="#/results" data-r="results"></a><a href="#/101" data-r="101"></a>
     </div>
     <div class="lang" role="group" aria-label="Language">
-      <button type="button" id="lang-ko" aria-pressed="true">한국어</button>
-      <button type="button" id="lang-en" aria-pressed="false">English</button>
+      <button type="button" id="lang-ko" aria-pressed="false">한국어</button>
+      <button type="button" id="lang-en" aria-pressed="true">English</button>
     </div>
   </div>
 </nav>
@@ -650,7 +650,7 @@ const TERMS={
 
 const toHorse=a=>({raceNo:a[0],rcptNo:a[1],hrnm:a[2],gndr:a[3],ag:a[4],ratg:a[5],trarNm:a[6],ownerNm:a[7],prds:a[8],c6:a[9],c1y:a[10],career:a[11]});
 let reg=REG_SAMPLE.map(toHorse), hsel=null, sortKey="ratg", sortDir=-1;
-let lang="ko", races=SAMPLE.slice(), sel=5, isSample=true;
+let lang="en", races=SAMPLE.slice(), sel=5, isSample=true;
 const $=id=>document.getElementById(id);
 const gateCls=n=>` g${Math.min(Math.max(+n||0,0),14)}`;
 const saddle=n=>`<span class="saddle${gateCls(n)}">${n}</span>`;
