@@ -39,6 +39,7 @@ ENDPOINTS = {
     "reg":      ("API324/textDataHoldJeRegInfo",  "json"),  # 제주출전등록
     "runs":     ("API315/textDataHoldJePtinInfo", "json"),  # 제주출전마
     "results":  ("jejuhorseresult/getjejuhorseresult", "json"),  # 제주경주마 경주성적
+    "pace":     ("API4_3/raceResult_3", "json"),             # 전국 경주기록 (구간 통과 순위, 배당)
     "horse":    ("API42_1/totalHorseInfo_1", "xml"),         # 마필종합정보
     "jockeys":  ("jktresult/getjktresult", "xml"),           # 기수통산전적
     "trainers": ("trtresult/gettrtresult", "xml"),           # 조교사통산전적
@@ -145,6 +146,16 @@ def main():
     bundle["reg"] = step("출전등록", lambda: fetch_all(a.key, "reg", d, max_pages=3))
     bundle["runs"] = step("출전마", lambda: fetch_all(a.key, "runs", d, max_pages=3))
     bundle["results"] = step("경주성적 이력", lambda: fetch_all(a.key, "results", {}, max_pages=a.result_pages))
+    # 구간 기록: 경주성적에 나온 경주일마다 한 번씩 호출
+    dates = sorted({str(r.get("rcDate", "")).replace("/", "") for r in bundle["results"] if r.get("gbn") == "R"})
+    pace = []
+    for d8 in dates:
+        try:
+            pace.extend(fetch_all(a.key, "pace", {"meet": MEET_JEJU, "rc_date": d8}, max_pages=2))
+        except ApiError as e:
+            errors.append(str(e)); break
+    print(f"· 구간 기록 ({len(dates)}일) ... {len(pace)}건")
+    bundle["pace"] = pace
     bundle["jockeys"] = step("기수 통산성적", lambda: fetch_all(a.key, "jockeys", {"meet": MEET_JEJU}))
     bundle["trainers"] = step("조교사 통산성적", lambda: fetch_all(a.key, "trainers", {"meet": MEET_JEJU}))
 

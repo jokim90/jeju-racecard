@@ -1,4 +1,8 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>제주경마 레이스카드</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=IBM+Plex+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@500&display=swap">
@@ -284,6 +288,19 @@ ol.order li.me{font-weight:700}
 .profile p{margin:0;font-size:14px;max-width:65ch}
 .noent{font-size:14px;color:var(--muted);margin:0}
 @media (prefers-reduced-motion:no-preference){.track .run,.bar i{transition:width .5s ease}}
+.tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.primerbtn{border:1px solid rgba(255,255,255,.4);background:transparent;color:#fff;border-radius:999px;padding:7px 14px;font:inherit;font-size:14px;cursor:pointer}
+.primerbtn:hover{background:rgba(255,255,255,.12)}
+.story{display:grid;gap:20px;max-width:72ch;padding-top:14px}
+.story h4{margin:0 0 6px;font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:var(--sea)}
+.story p,.story li{margin:0;font-size:15px;line-height:1.7}
+.story ul{margin:0;padding:0;list-style:none;display:grid;gap:10px}
+.story li{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:baseline}
+.gl{border:0;background:transparent;color:var(--sea);font:inherit;text-decoration:underline dotted;text-underline-offset:3px;cursor:pointer;padding:0}
+.pcard{border:1px solid var(--line);border-radius:10px;padding:10px 14px;background:var(--surface)}
+.pcard summary{cursor:pointer;font-weight:700}
+.pcard .pb{margin-top:8px;font-size:14px;line-height:1.7}
+.pcard .src{display:block;margin-top:8px;font-size:12px;color:var(--muted)}
 </style>
 
 <div class="wrap">
@@ -293,10 +310,11 @@ ol.order li.me{font-weight:700}
         <div class="eyebrow" id="t-eyebrow"></div>
         <h1 id="dayTitle"></h1>
       </div>
+      <div class="tools"><button type="button" id="primerBtn" class="primerbtn"></button>
       <div class="lang" role="group" aria-label="Language">
         <button type="button" id="lang-ko" aria-pressed="true">한국어</button>
         <button type="button" id="lang-en" aria-pressed="false">English</button>
-      </div>
+      </div></div>
     </div>
     <div class="facts" id="dayFacts"></div>
     <div class="days" id="days" role="group" aria-label="Race days"></div>
@@ -547,7 +565,7 @@ function render(){
   const t=T[lang]; document.documentElement.lang=lang;
   $("lang-ko").setAttribute("aria-pressed",lang==="ko"); $("lang-en").setAttribute("aria-pressed",lang==="en");
   ["eyebrow","gloss","load","loadhelp"].forEach(k=>$("t-"+k).textContent=t[k]);
-  $("loadBtn").textContent=t.loadBtn; $("fileLbl").textContent=t.fileBtn; $("resetBtn").textContent=t.resetBtn;
+  $("primerBtn").textContent=t.primerBtn; $("loadBtn").textContent=t.loadBtn; $("fileLbl").textContent=t.fileBtn; $("resetBtn").textContent=t.resetBtn;
   const r0=races[0], d=parseDate(r0), g=goingInfo(r0.going);
   $("dayTitle").textContent=t.title(d);
   const dy=days.get(curDay);
@@ -618,7 +636,7 @@ const TREAT={
 function parseTreat(s){ const m=String(s).match(/^(\d{4})\.(\d{2})\.(\d{2})(.*)$/); if(!m) return {date:"",items:[s]};
   return {date:`${m[1]}.${m[2]}.${m[3]}`,items:m[4].split(",").map(x=>x.trim()).filter(Boolean)}; }
 const toRunner=a=>({raceNo:a[0],no:a[1],hrnm:a[2],gndr:a[3],ag:a[4],wgt:a[5],jck:a[6],trar:a[7],owner:a[8],kd:a[9],e6:a[10],e1y:a[11],career:a[12],rec1y:a[13],recAll:a[14],equip:a[15],bleed:a[16],treat:a[17]});
-let runs=RUN_SAMPLE.map(toRunner), view="field", rsel=null;
+let runs=RUN_SAMPLE.map(toRunner), view="story", rsel=null;
 const recStr=r=>`${r[0]}전 ${r[1]}-${r[2]}-${r[3]}`, recStrEn=r=>`${r[0]} starts, ${r[1]}-${r[2]}-${r[3]}`;
 const pct=(a,b)=>b?Math.round(a/b*100):0;
 const kdName=k=>({"제":lang==="ko"?"제주마":"Jeju pony","한":lang==="ko"?"한라마":"Halla horse"})[k]||k;
@@ -648,7 +666,7 @@ const days=new Map(); let curDay=null;
 function mergeVet(apiRuns){ let n=0; apiRuns.forEach(h=>{const dy=days.get(String(h.raceDt)); if(!dy) return; const r=dy.runs.find(x=>x.raceNo==h.raceNo&&x.hrnm===h.hrnm); if(!r) return;
   r.equip=[1,2,3,4,5].map(i=>h["asisEquip"+i]).filter(x=>x&&x!=="-"); r.bleed=[1,2].map(i=>h["latstBledg"+i]).filter(x=>x&&x!=="-"); r.treat=[1,2].map(i=>h["latstTrea"+i+"Txt"]).filter(x=>x&&x!=="-"); r.vet=true; n++;}); return n; }
 function putDay(dy){ days.set(dy.date,dy); }
-function useDay(d){ const dy=days.get(d); if(!dy) return; curDay=d; rankSort="model"; races=dy.races; runs=dy.runs; reg=dy.reg; sel=0; rsel=null; hsel=null; view="field"; isSample=!!dy.sample; }
+function useDay(d){ const dy=days.get(d); if(!dy) return; curDay=d; rankSort="model"; races=dy.races; runs=dy.runs; reg=dy.reg; sel=0; rsel=null; hsel=null; view="story"; isSample=!!dy.sample; }
 function pickDefaultDay(){ const today=new Date(); const td=`${today.getFullYear()}${String(today.getMonth()+1).padStart(2,"0")}${String(today.getDate()).padStart(2,"0")}`;
   const ks=[...days.keys()].sort(); return ks.find(k=>k>=td&&days.get(k).sheet)||ks.filter(k=>days.get(k).sheet).pop()||ks.pop(); }
 
@@ -660,14 +678,16 @@ function renderEntries(){
   const ents=reg.filter(h=>h.raceNo==r.raceNo);
   if(!field.length&&ents.length) view="entries"; if(!field.length&&view==="rank") view="entries";
   if(!ents.length&&field.length&&view==="entries") view="field";
+  if(view==="story"&&!field.length) view=ents.length?"entries":"field";
   const tabs=`<div class="tabs" role="tablist">
+    <button type="button" role="tab" aria-selected="${view==="story"}" data-v="story" ${field.length?"":"disabled"}>${t.storyTab}</button>
     <button type="button" role="tab" aria-selected="${view==="field"}" data-v="field" ${field.length?"":"disabled"}>${t.field} <span>${field.length}</span></button>
     <button type="button" role="tab" aria-selected="${view==="rank"}" data-v="rank" ${field.length?"":"disabled"}>${t.rankTab}</button>
     <button type="button" role="tab" aria-selected="${view==="entries"}" data-v="entries" ${ents.length?"":"disabled"}>${t.entries} <span>${ents.length}</span></button></div>`;
   if(!field.length&&!ents.length){ box.innerHTML=`<h3>${t.field}</h3><p class="noent">${t.noEntries}</p>`; return; }
   box.innerHTML=tabs+`<div id="tabbody"></div>`;
   box.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{view=b.dataset.v;renderEntries();});
-  if(view==="field") renderField(field); else if(view==="rank") renderRank(field); else renderReg(ents);
+  if(view==="story") renderStory(field); else if(view==="field") renderField(field); else if(view==="rank") renderRank(field); else renderReg(ents);
 }
 
 function renderField(field){
@@ -970,6 +990,161 @@ function renderRank(field){
   body.querySelectorAll("th button").forEach(b=>b.onclick=()=>{rankSort=b.dataset.s; renderRank(field);});
 }
 
+/* ---- 제주경마 입문 카드 + 경주별 스토리 ----
+   모든 문장은 경주 데이터(등급·거리·중량·기록)와 「2026년 제주경마 시행계획」(한국마사회)에서만 만든다. */
+const ordEn=n=>{const s=["th","st","nd","rd"],v=n%100;return n+(s[(v-20)%10]||s[v]||s[0]);};
+const ordL=n=>n===99?"–":(lang==="ko"?`${n}착`:ordEn(n));
+const glBtn=(key,label)=>`<button type="button" class="gl" data-g="${key}">${label}</button>`;
+const RBAND={1:"R81+",2:"R61–80",3:"R41–60",4:"R21–40",5:"R1–20"};
+const PRIMER=[
+ {k:"jeju",
+  t:["제주경마 한눈에","Jeju racing at a glance"],
+  b:["2026년 제주는 1월부터 12월까지 약 100일, 총 703경주를 시행하고 전 경주를 중계합니다. 설, 한여름, 추석에는 휴장합니다. 8월 7일~9월 6일 5주간은 금·토 야간경마를 했고, 월요일 공휴일 3일(3/2, 8/17, 10/5)에도 경주가 열립니다.",
+     "In 2026 Jeju races about 100 days and 703 races from January to December, and every race is broadcast. There are no meetings around Lunar New Year, the midsummer break or Chuseok. Friday and Saturday night racing ran for five weeks from 7 Aug to 6 Sep, and three Monday public holidays (2 Mar, 17 Aug, 5 Oct) also have a Jeju card."],
+  s:"2026 Jeju Racing Plan, pp.1, 4–6"},
+ {k:"horses",
+  t:["경주마: 제주마와 한라마","The horses: Jeju pony and Halla horse"],
+  b:["제주경마장에는 천연기념물 제주마와, 제주마 혈통이 섞인 한라마가 출전합니다. 서울·부경의 더러브렛보다 체구가 작습니다. 이 페이지의 '제주마 / 한라마' 표시는 KRA 마필 정보의 품종 구분(제·한)입니다.",
+     "Jeju races feature the native Jeju pony (a natural monument) and the Halla horse, a Jeju–Thoroughbred cross. Both are smaller than the Thoroughbreds raced in Seoul and Busan. The 'Jeju pony / Halla horse' label on this page comes from the breed code in KRA's horse data."],
+  s:"KRA horse data (breed code)"},
+ {k:"class",
+  t:["등급과 레이팅","Classes and ratings"],
+  b:["1~5등급은 레이팅 구간으로 나뉩니다: 1등급 R81 이상, 2등급 R61~80, 3등급 R41~60, 4등급 R21~40, 5등급 R1~20. 6등급은 아직 레이팅이 없는 말들의 입문 등급(2026년 기준 4세 이하, 순위상금 누적 700만 원 미만)입니다. 700만 원에 도달하면 레이팅(R1~20)을 받고 5등급으로 올라갑니다. 레이팅 1점은 부담중량 0.5kg이며, 조정 내용은 매주 경마 종료 후 KRA 홈페이지에 공지됩니다.",
+     "Classes 1–5 are set by rating band: Class 1 is R81+, Class 2 R61–80, Class 3 R41–60, Class 4 R21–40, Class 5 R1–20. Class 6 is the entry level for horses with no rating yet (in 2026: four-year-olds and under with career prize money below ₩7M). On reaching ₩7M a horse is given a rating (R1–20) and moves up to Class 5. One rating point equals 0.5 kg of weight, and rating changes are published on KRA's site after each race day."],
+  s:"2026 Jeju Racing Plan, pp.7, 11–13"},
+ {k:"weight",
+  t:["부담중량과 수습기수","Weights and apprentice riders"],
+  b:["6등급은 별정A: 성별에 관계없이 55kg으로 같습니다. 나머지 등급은 핸디캡으로, 레이팅 차이를 중량으로 맞춥니다(1점=0.5kg, 최저 51kg, 2~5등급은 상한 60kg). 수습기수는 우승 횟수에 따라 중량을 감량받습니다: 10승 미만 4kg, 10~19승 3kg, 20~29승 2kg, 30~39승 1kg(일반경주, 데뷔 후 5년 이내). 그래서 6등급에서 55kg 미만이면 수습기수가 탔다는 신호입니다.",
+     "Class 6 uses set weights (Set A): every horse carries 55 kg regardless of sex. Other classes are handicaps, with rating differences turned into weight (1 point = 0.5 kg, minimum 51 kg, and a 60 kg cap in Classes 2–5). Apprentice jockeys claim an allowance by number of wins: under 10 wins 4 kg, 10–19 wins 3 kg, 20–29 wins 2 kg, 30–39 wins 1 kg (standard races, up to five years from debut). So in a Class 6 race, a weight under 55 kg signals an apprentice."],
+  s:"2026 Jeju Racing Plan, pp.8–11"},
+ {k:"distance",
+  t:["경주거리","Distances"],
+  b:["제주는 800 · 900 · 1000 · 1110 · 1200 · 1300 · 1400 · 1610m, 8가지 거리를 씁니다. 2026년 6등급 경주는 800 · 900 · 1000m입니다. 기승 횟수 30회 이하의 기수는 1300 · 1400 · 1610m 경주를 탈 수 없습니다.",
+     "Jeju uses eight distances: 800, 900, 1000, 1110, 1200, 1300, 1400 and 1610 m. Class 6 races in 2026 are run at 800, 900 or 1000 m. Jockeys with 30 rides or fewer are not allowed to ride at 1300, 1400 or 1610 m."],
+  s:"2026 Jeju Racing Plan, pp.3, 8"},
+ {k:"prize",
+  t:["상금","Prize money"],
+  b:["순위상금은 1위 50% · 2위 23% · 3위 15% · 4위 7% · 5위 5%로 나뉩니다. 1~5위 합계는 1등급 4,400만 원, 2등급 3,700만, 3등급 3,100만, 4등급 2,600만, 5등급 2,100만, 6등급 1,400만 원입니다. 상금은 마주 60.21%, 조교사 31.59%, 기수 8.20%로 나눠 받고, 기수는 별도로 기승료(일반경주 주간 103,000원)를 받습니다.",
+     "Purses are split 50% / 23% / 15% / 7% / 5% across the first five places. Total purse by class: Class 1 ₩44M, Class 2 ₩37M, Class 3 ₩31M, Class 4 ₩26M, Class 5 ₩21M, Class 6 ₩14M. The winnings are shared 60.21% to the owner, 31.59% to the trainer and 8.20% to the jockey, and the jockey also receives a riding fee (₩103,000 in a standard daytime race)."],
+  s:"2026 Jeju Racing Plan, pp.18–19"},
+ {k:"trials",
+  t:["경주마가 되기까지: 심사","Getting to the races: qualifying trials"],
+  b:["신마는 출발심사와 800m 주행심사를 통과해야 경주에 나올 수 있습니다. 2026년 주행심사 합격 기준은 800m 1분 10.0초 이내입니다(2022년 1분 13.0초에서 해마다 빨라졌습니다). 마지막 심사 통과일이나 경주 출전일로부터 120일 이상 쉬면 주행심사를 다시 받아야 합니다. 경주 중 폐출혈이 나오면 1~3개월 출전정지와 재심사를 받습니다.",
+     "A new horse must pass a barrier trial and an 800 m qualifying trial before it can race. The 2026 pass standard is 1:10.0 or faster over 800 m (it was 1:13.0 in 2022 and has tightened every year). A horse that has not raced or passed a trial for 120 days or more must re-qualify. A horse that bleeds in a race is suspended for one to three months and must re-pass a trial."],
+  s:"2026 Jeju Racing Plan, pp.2, 21–25"},
+ {k:"card",
+  t:["출전표는 이렇게 만들어집니다","How a race card is put together"],
+  b:["출전신청은 경주가 있는 주 수요일 10:00~11:00에 받습니다. 한 경주는 7~10두(일부 대상경주 12두)로 편성하고, 7두 미만이면 취소하거나 다시 신청받으며 14두 이상이면 경주를 나눌 수 있습니다. 마주와 조교사는 한 경주에 2두까지 낼 수 있고, 말은 한 주에 한 경주만 뜁니다. 출발번호는 일반경주에서 컴퓨터가 무작위로 뽑습니다. 경주 출전예정일 기준 24개월 미만의 말은 신청할 수 없고, 6등급에서는 출전 경험이 없는 신마가 우선 편성됩니다.",
+     "Entries are taken on the Wednesday of race week, 10:00–11:00. A race has 7 to 10 runners (12 in some stakes); fewer than 7 and it is cancelled or re-opened, and 14 or more can be split into two divisions. An owner or trainer may enter at most two horses in one race, and a horse may run in only one race a week. Draw numbers in standard races are assigned by computer at random. Horses under 24 months of age on race day cannot enter, and in Class 6 horses with no race experience get priority."],
+  s:"2026 Jeju Racing Plan, pp.26–35"},
+ {k:"big",
+  t:["다가오는 큰 경주 (2026)","Big races ahead (2026)"],
+  b:["<b>10월 17일</b> 제주특별자치도지사배(제36회, 1400m, 6세 이하, 핸디캡, 10두, 순위상금 합계 1억 5천만 원) · 호국영웅 레클리스(1200m, 7세 이상, 12두, 5,500만 원)<br><b>11월 14일</b> 마주협회장배(1200m, 3세 이하, 12두, 9,000만 원)<br><b>11월 28일</b> 제주일마배(제34회, 1610m, 오픈, 12두, 1억 원)<br><small>일정과 조건은 경마 시행 상황에 따라 바뀔 수 있습니다.</small>",
+     "<b>17 Oct</b> Jeju Governor's Cup (36th, 1400 m, six-year-olds and under, handicap, 10 runners, total purse ₩150M) · Hoguk Yeongung Reclis (1200 m, seven-year-olds and over, 12 runners, ₩55M)<br><b>14 Nov</b> Owners' Association Chairman's Cup (1200 m, three-year-olds and under, 12 runners, ₩90M)<br><b>28 Nov</b> Jeju Ilma Cup (34th, 1610 m, open, 12 runners, ₩100M)<br><small>Dates and conditions may change depending on how the racing programme runs.</small>"],
+  s:"2026 Jeju Racing Plan, p.16"}
+];
+const GLKEY={class:"class",rating:"class",weight:"weight",apprentice:"weight",trial:"trials",breed:"horses",prize:"prize",distance:"distance",card:"card"};
+Object.assign(T.ko,{storyTab:"스토리",primerBtn:"제주경마 입문",primerTitle:"제주경마 입문",primerLede:"외국에서 처음 보시는 분을 위한 짧은 안내입니다. 숫자는 한국마사회 「2026년 제주경마 시행계획」 기준입니다."});
+Object.assign(T.en,{storyTab:"Story",primerBtn:"Jeju 101",primerTitle:"Jeju racing 101",primerLede:"A short guide for first-time viewers. Figures are from KRA's 2026 Jeju Racing Plan."});
+function primerHtml(open){
+  const t=T[lang], i=lang==="ko"?0:1;
+  return `<section><h3>${t.primerTitle}</h3><p class="chnote">${t.primerLede}</p></section>`+PRIMER.map(c=>
+    `<details class="pcard" id="pc-${c.k}" ${(open?open===c.k:c.k==="jeju")?"open":""}><summary>${c.t[i]}</summary><div class="pb">${c.b[i]}</div><span class="src">${c.s}</span></details>`).join("");
+}
+function openPrimer(key){
+  drawerState={kind:"primer",name:key||null}; $("drawer").hidden=false; document.body.classList.add("drawer-open");
+  $("dbody").innerHTML=primerHtml(key); $("dbody").scrollTop=0;
+  const el=key&&$("pc-"+key); if(el) el.scrollIntoView({block:"start"});
+  $("dclose").focus();
+}
+$("primerBtn").onclick=()=>openPrimer();
+
+function runHist(name){ return recentFor(name).filter(r=>r.gbn==="R"); }
+function whyReasons(x,race){
+  const ko=lang==="ko", f=x.f, h=x.h, out=[];
+  const rs=runHist(h.hrnm);
+  if(f.form!=null&&x.n.form>=0.7&&rs.length){ const l=rs.slice(0,3).map(r=>ordL(pos(r.chak)));
+    out.push(ko?`최근 ${l.length}전 ${l.join(" · ")}`:(l.length===1?`last run: ${l[0]}`:`last ${l.length} runs: ${l.join(", ")}`)); }
+  if(f.distN>0&&x.n.dist>=0.7){ const near=rs.filter(r=>Math.abs(r.dist-race.raceDs)<=100), ap=near.map(r=>pos(r.chak)).filter(p=>p!==99);
+    if(ap.length){ const a=(sum(ap)/ap.length).toFixed(1); out.push(ko?`비슷한 거리(±100m) ${near.length}전 평균 ${a}착`:`${near.length} ${near.length===1?"run":"runs"} near this distance, average finish ${a}`); } }
+  const j=jks.get(h.jck); if(j&&j.n>=30&&x.n.jock>=0.7) out.push(ko?`${pname(h.jck)} 기수 제주 통산 승률 ${j.wr}%`:`jockey ${pname(h.jck)} wins ${j.wr}% of Jeju rides`);
+  const tt=trs.get(h.trar); if(tt&&tt.n>=30&&x.n.trn>=0.8) out.push(ko?`${pname(h.trar)} 조교사 통산 승률 ${tt.wr}%`:`trainer ${pname(h.trar)} wins ${tt.wr}% of Jeju starters`);
+  if(f.ratg!=null&&x.n.ratg>=0.8) out.push(ko?`레이팅 R${f.ratg}로 출전마 중 상위`:`rating R${f.ratg}, near the top of this field`);
+  return out.slice(0,3);
+}
+function buildStory(field,race){
+  const ko=lang==="ko", n=field.length, clsN=+((String(race.raceClas).match(/(\d+)/)||[])[1]||0);
+  const unrated=clsN===6||!!race.cndtsPrize;
+  const ws=field.map(h=>h.wgt).filter(Boolean), wmin=Math.min(...ws), wmax=Math.max(...ws);
+  const first=num(race.rpmFplc), tot=sum([race.rpmFplc,race.rpmSplc,race.rpmTplc,race.rpmFoplc,race.rpmFvplc].map(num));
+  const set=String(race.cndtsBurdWgt||"").includes("별정"), hcap=String(race.cndtsBurdWgt||"").includes("핸디캡");
+  const kdc={}; field.forEach(h=>{if(h.kd&&h.kd!=="-") kdc[h.kd]=(kdc[h.kd]||0)+1;});
+  const mix=Object.entries(kdc).map(([k,v])=>ko?`${kdName(k)} ${v}두`:`${kdName(k)} ×${v}`).join(" · ");
+  const age=race.cndtsAg?(ko?`${race.cndtsAg}`:String(race.cndtsAg).replace("세이하"," and under").replace("세이상","+")):"";
+  const clsLbl=glBtn("class",esc(classLabel(race.raceClas)));
+  /* 1. 어떤 경주인가 */
+  let p1=ko?`${n}두가 ${race.raceDs}m를 달리는 ${clsLbl} 경주입니다. `:`${n} runners go ${race.raceDs} m in a ${clsLbl} race. `;
+  p1+=unrated
+    ?(ko?`6등급은 아직 ${glBtn("rating","레이팅")}이 없는 말들의 입문 단계로, 순위상금을 누적 700만 원 벌면 레이팅을 받고 위 등급으로 올라갑니다. `
+        :`Class 6 is the entry level for horses with no ${glBtn("rating","rating")} yet: once one earns ₩7M in prize money it gets a rating and moves up. `)
+    :(RBAND[clsN]?(ko?`${RBAND[clsN]} 레이팅 구간의 말만 출전할 수 있습니다(${glBtn("rating","레이팅")} 1점 = 부담중량 0.5kg). `
+        :`Only horses rated ${RBAND[clsN]} are eligible (one ${glBtn("rating","rating")} point = 0.5 kg). `):"");
+  if(age) p1+=ko?`연령 조건은 ${esc(age)}입니다. `:`Age condition: ${esc(age)}. `;
+  if(isFinite(wmin)){
+    p1+=wmin===wmax
+      ?(ko?`전원 ${wmin}kg으로 ${glBtn("weight","중량")}이 같습니다. `:`Every runner carries the same ${wmin} kg (${glBtn("weight","set weights")}). `)
+      :(ko?`${glBtn("weight","부담중량")}은 ${wmin}~${wmax}kg입니다${hcap?"(핸디캡: 레이팅 차이를 중량으로 맞춤)":""}. `:`Weights run from ${wmin} to ${wmax} kg${hcap?" (handicap: rating gaps are evened out with weight)":""}. `);
+  }
+  if(mix) p1+=ko?`출전마 구성은 ${mix}. `:`Field: ${mix}. `;
+  if(first) p1+=ko?`우승 상금은 ₩${fmt(first)}(총 ₩${fmt(tot)}), 마주 · 조교사 · 기수가 나눕니다.`:`The winner's share is ₩${fmt(first)} of a ₩${fmt(tot)} ${glBtn("prize","purse")}.`;
+  /* 2. 누가 앞서나 */
+  const rows=rankField(field,race).sort((a,b)=>b.prob-a.prob), top=rows.slice(0,3);
+  const li=top.map((x,i)=>{ const why=whyReasons(x,race);
+    return `<li><span>${saddle(x.h.no)}</span><span>${chipBtn("horse",x.h.hrnm)} <b>${x.prob.toFixed(0)}%</b> — ${why.length?why.join(" · "):(ko?"두드러진 요소는 없지만 전반적으로 무난한 점수":"no single standout factor, solid across the board")}</span></li>`;}).join("");
+  const gap=rows.length>1?rows[0].prob-rows[1].prob:99;
+  const thin=field.filter(h=>runHist(h.hrnm).length<3).length;
+  const mostThin=thin>=Math.ceil(n/2);
+  const p2=(mostThin?(ko?`이 경주는 출전마 대부분(${thin}/${n}두)의 최근 기록이 3전 미만이라, 모델 점수는 약한 단서일 뿐입니다. 아래 순서는 기수·조교사 성적과 짧은 기록에 크게 의존합니다.`
+          :`Most of this field (${thin} of ${n}) has fewer than three recent runs on file, so the model score is only a weak clue. The order below leans heavily on jockey and trainer records and very short form lines.`)
+      :(gap<3?(ko?"선두권 차이가 작아 접전으로 보입니다. ":"The top of the market is tight. "):(ko?"모델이 비교적 뚜렷하게 한 마리를 앞에 둡니다. ":"The model separates one runner fairly clearly. "))
+        +(thin?(ko?`다만 ${thin}두는 최근 기록이 3전 미만이라 점수가 불확실합니다.`:`Note that ${thin} runner${thin>1?"s have":" has"} fewer than three recent runs on file, so their scores are uncertain.`):""));
+  /* 3. 전개 */
+  const st=field.map(h=>({h,s:styleOf(h.hrnm)})).filter(x=>x.s), cover=st.length;
+  const nm=a=>a.map(x=>chipBtn("horse",x.h.hrnm)).join(", ");
+  const lead=st.filter(x=>x.s.k==="front"), clo=st.filter(x=>x.s.k==="closer");
+  let p3;
+  if(cover<Math.ceil(n/2)) p3=ko?`구간 기록이 남아 있는 말이 ${cover}/${n}두뿐이라 전개 예측은 보류합니다.`:`Only ${cover} of ${n} runners have sectional records on file, so no pace call is made.`;
+  else{
+    p3=lead.length>=3?(ko?`선행을 즐기는 말이 ${nm(lead)}로 여럿입니다. 초반 선두 다툼이 빨라지면 뒤에서 따라가는 말에게 기회가 올 수 있습니다. `:`Several runners like to lead (${nm(lead)}). A hot early duel could set things up for those further back. `)
+      :lead.length===2?(ko?`${nm(lead)}가 모두 앞자리를 노리는 타입이라 초반에 선두 다툼이 있을 수 있습니다. `:`${nm(lead)} both want the front, so expect an early tussle. `)
+      :lead.length===1?(ko?`${nm(lead)}가 유일한 선행형이라 편하게 앞자리를 잡을 수 있습니다. `:`${nm(lead)} is the only front-runner and may get an easy lead. `)
+      :(ko?"뚜렷한 선행형이 없어 초반이 느리게 흐를 수 있고, 앞에서 편하게 가는 말이 유리해질 수 있습니다. ":"There is no obvious front-runner, so the early pace could be slow and favour horses sitting close to it. ");
+    if(clo.length&&lead.length) p3+=ko?`추입형으로는 ${nm(clo)}가 있습니다. `:`Closers include ${nm(clo)}. `;
+    p3+=ko?`(구간 기록 ${cover}/${n}두 기준) `:`(based on sectional records for ${cover} of ${n} runners) `;
+    if(race.raceDs<=1000) p3+=ko?`${race.raceDs}m 단거리라 출발과 초반 위치가 중요합니다.`:`At ${race.raceDs} m this is a sprint, so the start and early position matter.`;
+  }
+  /* 4. 주의할 점 */
+  const w=[];
+  const debut=field.filter(h=>h.recAll[0]===0); if(debut.length) w.push(ko?`기록이 없는 신마: ${nm(debut.map(h=>({h})))}. ${glBtn("trial","주행심사")}는 통과했지만 실전 경험이 없습니다.`:`Debutants with no race record: ${nm(debut.map(h=>({h})))}. They have passed the ${glBtn("trial","qualifying trial")} but have never raced.`);
+  if(unrated&&set){ const ap=field.filter(h=>h.wgt&&h.wgt<55); if(ap.length) w.push(ko?`55kg 미만을 지는 말: ${ap.map(h=>`${chipBtn("horse",h.hrnm)} ${h.wgt}kg`).join(", ")} — ${glBtn("apprentice","수습기수")} 감량으로 보입니다.`:`Carrying under 55 kg: ${ap.map(h=>`${chipBtn("horse",h.hrnm)} ${h.wgt} kg`).join(", ")} — this points to an ${glBtn("apprentice","apprentice")} claiming an allowance.`); }
+  const none=field.filter(h=>h.recAll[0]>0&&!runHist(h.hrnm).length); if(none.length&&none.length<n) w.push(ko?`최근 기록 데이터에 경주가 없는 말: ${nm(none.map(h=>({h})))}. 쉬었다 나왔을 수 있습니다.`:`No run in the recent data for: ${nm(none.map(h=>({h})))}. They may be returning from a break.`);
+  const bl=field.filter(h=>h.bleed&&h.bleed.length); if(bl.length) w.push(ko?`폐출혈 기록이 확인된 말: ${nm(bl.map(h=>({h})))}.`:`Bleeding record on file: ${nm(bl.map(h=>({h})))}.`);
+  const H=ko?["이 경주는 어떤 경주인가","누가 앞서 보이나","어떻게 흘러갈까","주의할 점","한 줄 정리"]:["What kind of race is this?","Who looks best","How it may unfold","Watch-outs","Bottom line"];
+  const bottom=ko?`모델 상위는 ${top.map(x=>`#${x.h.no}`).join(" · ")}입니다. 반영된 최근 경주가 많지 않으니 ${glBtn("card","출전표")}와 함께 참고용으로 보세요.`
+                 :`The model's top three are ${top.map(x=>`#${x.h.no}`).join(", ")}. It only sees a limited window of recent results, so use it alongside the ${glBtn("card","race card")} rather than on its own.`;
+  return `<div class="story"><div><h4>${H[0]}</h4><p>${p1}</p></div>
+    <div><h4>${H[1]}</h4><ul>${li}</ul><p style="margin-top:8px">${p2}</p></div>
+    <div><h4>${H[2]}</h4><p>${p3}</p></div>
+    <div><h4>${H[3]}</h4>${w.length?`<ul class="wl">${w.map(x=>`<li><span>•</span><span>${x}</span></li>`).join("")}</ul>`:`<p>${ko?"눈에 띄는 주의 사항은 없습니다.":"Nothing stands out."}</p>`}</div>
+    <div><h4>${H[4]}</h4><p>${bottom}</p></div>
+    <p class="chnote">${ko?"이 글은 경주 데이터와 시행계획에서 자동으로 만들어집니다. 밑줄 친 용어를 누르면 설명이 열립니다.":"Generated automatically from the race data and the Racing Plan. Tap an underlined term for an explanation."}</p></div>`;
+}
+function renderStory(field){
+  const body=$("tabbody"), r=races[sel];
+  body.innerHTML=buildStory(field,r);
+  body.querySelectorAll(".gl").forEach(b=>b.onclick=()=>openPrimer(GLKEY[b.dataset.g]||b.dataset.g));
+}
+
 /* ---- 전개(구간 통과 순위) ---- */
 const toPace=a=>({date:a[0],no:a[1],hrnm:a[2],hrNo:a[3],gate:a[4],ord:a[5],s1f:a[6],c2:a[7],c3:a[8],c4:a[9],g1f:a[10],time:a[11],win:a[12],plc:a[13],diff:a[14],bw:a[15],dist:a[16]});
 let pace=PACE_SAMPLE.map(toPace);
@@ -1052,15 +1227,15 @@ function bindTrack(box,rows,dist,focus){
 
 function renderTerms(){ $("terms").innerHTML=TERMS[lang].map(([a,b])=>`<div class="term"><b>${a}</b><p>${b}</p></div>`).join(""); }
 
-$("lang-ko").onclick=()=>{lang="ko";render();};
-$("lang-en").onclick=()=>{lang="en";render();};
+$("lang-ko").onclick=()=>{lang="ko";render();if(drawerState&&drawerState.kind==="primer")openPrimer(drawerState.name);};
+$("lang-en").onclick=()=>{lang="en";render();if(drawerState&&drawerState.kind==="primer")openPrimer(drawerState.name);};
 const ING={
   races:it=>{const rs=it.slice().sort((a,b)=>a.raceNo-b.raceNo); const d=String(rs[0].raceDt); const ex=days.get(d);
     putDay({date:d,races:rs,runs:ex?ex.runs:[],reg:ex?ex.reg:[],sheet:false}); useDay(d);},
   reg:it=>{reg=it.map(h=>({raceNo:h.raceNo,rcptNo:h.rcptNo,hrnm:h.hrnm,gndr:h.gndr,ag:+h.ag,ratg:+h.ratg,trarNm:h.trarNm,ownerNm:h.ownerNm,prds:h.prds,c6:num(h.chaksun_6m),c1y:num(h.chaksunY),career:num(h.erngSump)})); hsel=null;},
   runs:it=>{ if(days.get(String(it[0].raceDt))?.sheet){ mergeVet(it); useDay(String(it[0].raceDt)); return; } runs=it.map(h=>toRunner([h.raceNo,h.pthrNo,h.hrnm,h.gndr,+h.ag,+h.burdWgt,h.jckyNm,h.trarNm,h.ownerNm||"",h.kdhr,num(h.erngLsm),num(h.erngLoy),num(h.erngSump),
         [h.loyRcodSum,h.loyRcodFplc,h.loyRcodSplc,h.loyRcodTplc].map(Number),[h.sumpRcodSum,h.sumpRcodFplc,h.sumpRcodSplc,h.sumpRcodTplc].map(Number),
-        [1,2,3,4,5].map(i=>h["asisEquip"+i]).filter(x=>x&&x!=="-"),[1,2].map(i=>h["latstBledg"+i]).filter(x=>x&&x!=="-"),[1,2].map(i=>h["latstTrea"+i+"Txt"]).filter(x=>x&&x!=="-")])); rsel=null; view="field";},
+        [1,2,3,4,5].map(i=>h["asisEquip"+i]).filter(x=>x&&x!=="-"),[1,2].map(i=>h["latstBledg"+i]).filter(x=>x&&x!=="-"),[1,2].map(i=>h["latstTrea"+i+"Txt"]).filter(x=>x&&x!=="-")])); rsel=null; view="story";},
   results:it=>{results=it.map(r=>toRes([r.rcDate,r.gbn,r.rcNo,r.rcGrade,r.gun,r.budam,r.rcDist,r.track,r.chak,String(r.diff),r.hrName,r.jkName,r.wgBudam,r.wgHr,r.wgHrDiff,r.rating,r.rcTime,r.hrNo])); resKey=null; resSel=null;},
   jockeys:it=>it.forEach(a=>jks.set(a.jkName,{n:+a.rcCntT,w:+a.ord1CntT,s:+a.ord2CntT,t:+a.ord3CntT,wr:+a.winRateTsum,qr:+a.quRateTsum})),
   trainers:it=>it.forEach(a=>trs.set(a.trName,{n:+a.rcCntT,w:+a.ord1CntT,s:+a.ord2CntT,t:+a.ord3CntT,wr:+a.winRateTsum,qr:+a.quRateTsum})),
@@ -1112,5 +1287,3 @@ const DATA_URL="latest.json";
   }catch(e){}
 })();
 </script>
-
-</body></html>
