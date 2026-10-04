@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>제주경마 레이스카드</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=IBM+Plex+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Barlow+Condensed:ital,wght@0,600;0,800;1,600;1,800&family=IBM+Plex+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@500&display=swap">
 <style>
 /* Layout: race-day header → numbered race strip (real race order) → one race explained in plain language → glossary → data loader */
 :root{
@@ -289,8 +289,6 @@ ol.order li.me{font-weight:700}
 .noent{font-size:14px;color:var(--muted);margin:0}
 @media (prefers-reduced-motion:no-preference){.track .run,.bar i{transition:width .5s ease}}
 .tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
-.primerbtn{border:1px solid rgba(255,255,255,.4);background:transparent;color:#fff;border-radius:999px;padding:7px 14px;font:inherit;font-size:14px;cursor:pointer}
-.primerbtn:hover{background:rgba(255,255,255,.12)}
 .story{display:grid;gap:20px;max-width:72ch;padding-top:14px}
 .story h4{margin:0 0 6px;font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:var(--sea)}
 .story p,.story li{margin:0;font-size:15px;line-height:1.7}
@@ -301,20 +299,112 @@ ol.order li.me{font-weight:700}
 .pcard summary{cursor:pointer;font-weight:700}
 .pcard .pb{margin-top:8px;font-size:14px;line-height:1.7}
 .pcard .src{display:block;margin-top:8px;font-size:12px;color:var(--muted)}
+/* Korea Cup-style chrome: white bar, condensed italic display, navy footer, gold accents */
+:root{--navy:#203364;--gold:#e0ab2a;--cond:"Barlow Condensed","Arial Narrow",sans-serif}
+.topnav{position:sticky;top:0;z-index:30;background:#fff;color:var(--navy);display:flex;align-items:center;gap:18px;padding:0 20px;height:60px;border-bottom:1px solid #e6e8ee}
+:root[data-theme="dark"] .topnav{background:#141a2b;border-color:#2a3350}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .topnav{background:#141a2b;border-color:#2a3350}}
+.topnav .brand{display:flex;gap:6px;align-items:baseline;text-decoration:none;color:var(--navy);font-family:var(--cond);font-weight:800;font-style:italic;font-size:26px;letter-spacing:.02em;line-height:1}
+.topnav .brand .b2{color:var(--tangerine)}
+:root[data-theme="dark"] .topnav .brand{color:#fff}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .topnav .brand{color:#fff}}
+.navr{display:flex;align-items:center;gap:18px;margin-left:auto}
+.navtabs{display:flex;gap:2px}
+.navtabs a{color:var(--navy);text-decoration:none;font-family:var(--cond);font-weight:600;font-size:18px;letter-spacing:.04em;text-transform:uppercase;padding:6px 12px;border-bottom:3px solid transparent}
+:root[data-theme="dark"] .navtabs a{color:#dfe4f0}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .navtabs a{color:#dfe4f0}}
+.navtabs a:hover{color:var(--tangerine)}
+.navtabs a[aria-current="page"]{border-bottom-color:var(--tangerine);color:var(--tangerine)}
+.topnav .lang{background:#edf0f5}
+.topnav .lang button{color:#4a5675}
+.topnav .lang button[aria-pressed="true"]{background:var(--navy);color:#fff}
+.burger{display:none;margin-left:auto;border:0;background:transparent;width:40px;height:40px;cursor:pointer;flex-direction:column;justify-content:center;gap:5px;align-items:center}
+.burger span{display:block;width:24px;height:2px;background:var(--navy);transition:transform .2s}
+:root[data-theme="dark"] .burger span{background:#fff}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .burger span{background:#fff}}
+@media (max-width:720px){
+  .topnav{justify-content:center}.topnav .brand{position:absolute;left:50%;transform:translateX(-50%)}
+  .burger{display:flex;margin-left:auto}
+  .navr{display:none;position:absolute;top:60px;left:0;right:0;background:#fff;border-bottom:1px solid #e6e8ee;flex-direction:column;align-items:stretch;padding:8px 16px 16px;gap:8px;box-shadow:0 12px 30px rgba(0,0,0,.12)}
+  :root[data-theme="dark"] .navr{background:#141a2b}
+  .topnav.open .navr{display:flex}
+  .navtabs{flex-direction:column}.navtabs a{font-size:22px;padding:10px 4px;border-bottom:1px solid #e6e8ee}
+  .topnav .lang{align-self:flex-start}
+}
+/* home */
+.home{display:block;width:100%;overflow:hidden}
+body{margin:0}
+.wrap[hidden]{display:none}
+html[lang="ko"] .hero h1,html[lang="ko"] .hsec .kick,html[lang="ko"] .hcard h2,html[lang="ko"] .foot .ft{font-family:var(--display);font-style:normal;font-weight:400}
+html[lang="ko"] .hero .sub,html[lang="ko"] .hsec .lede2,html[lang="ko"] .hero .cta a,html[lang="ko"] .hgo,html[lang="ko"] .foot,html[lang="ko"] .navtabs a{font-family:var(--body);font-style:normal;font-weight:700}
+html[lang="ko"] .navtabs a{font-size:15px}
+.hero{position:relative;min-height:min(78vh,620px);background:#223 url("hero.jpg") center 40%/cover no-repeat;display:flex;align-items:flex-end;justify-content:flex-end;padding:40px clamp(20px,6vw,80px) 48px;isolation:isolate}
+.hero::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0) 35%,rgba(10,16,32,.72) 100%),linear-gradient(90deg,rgba(0,0,0,0) 40%,rgba(10,16,32,.45) 100%);z-index:-1}
+.hero .ht{text-align:right;color:#fff;font-family:var(--cond);font-style:italic;font-weight:800;text-transform:uppercase;line-height:.95;text-shadow:0 2px 14px rgba(0,0,0,.45);display:grid;gap:6px;justify-items:end}
+.hero .yr{color:var(--gold);font-size:clamp(34px,6vw,64px)}
+.hero h1{font-family:var(--cond);font-weight:800;font-style:italic;font-size:clamp(44px,9vw,96px);margin:0;line-height:.92;letter-spacing:.01em}
+.hero .sub{color:var(--gold);font-size:clamp(18px,2.6vw,28px);font-weight:600;margin-top:6px}
+.hero .cta{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap;justify-content:flex-end}
+.hero .cta a{font-family:var(--cond);font-style:italic;font-weight:800;text-transform:uppercase;font-size:18px;letter-spacing:.04em;padding:10px 20px;border-radius:4px;text-decoration:none;color:#111;background:var(--gold)}
+.hero .cta a.alt{background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.6)}
+.hsec{background:#fff;color:var(--navy);padding:56px 20px 64px;text-align:center}
+:root[data-theme="dark"] .hsec{background:#1a2033;color:#e7ebf4}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .hsec{background:#1a2033;color:#e7ebf4}}
+.hsec .kick{font-family:var(--cond);font-style:italic;font-weight:800;text-transform:uppercase;color:var(--gold);font-size:clamp(30px,5vw,48px);line-height:1;margin:0}
+.hsec .lede2{font-family:var(--cond);font-style:italic;font-weight:600;font-size:clamp(18px,2.4vw,24px);margin:10px auto 0;max-width:60ch;line-height:1.3}
+.hcards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;max-width:1080px;margin:36px auto 0;text-align:left}
+.hcard{display:grid;gap:10px;align-content:start;background:var(--surface);border:1px solid var(--line);border-top:5px solid var(--navy);border-radius:8px;padding:22px 22px 20px;color:var(--ink);text-decoration:none;min-height:230px;transition:transform .15s,box-shadow .15s}
+.hcard:nth-child(2){border-top-color:var(--tangerine)}.hcard:nth-child(3){border-top-color:var(--gold)}
+.hcard:hover{transform:translateY(-3px);box-shadow:0 14px 30px rgba(32,51,100,.14)}
+.hcard h2{font-family:var(--cond);font-style:italic;font-weight:800;text-transform:uppercase;font-size:34px;margin:0;line-height:1;color:var(--navy)}
+:root[data-theme="dark"] .hcard h2{color:#fff}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .hcard h2{color:#fff}}
+.hnum{font-family:var(--cond);font-weight:800;font-style:italic;font-size:16px;color:var(--gold)}
+.hgo{font-family:var(--cond);font-style:italic;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--tangerine);font-size:18px}
+/* footer */
+.foot{background:var(--navy);color:#dfe4f0;padding:40px 20px 36px;font-family:var(--cond);font-weight:600;font-size:18px;line-height:1.5}
+.foot .in{max-width:1080px;margin:0 auto;display:grid;gap:18px}
+.foot .ft{color:var(--gold);font-style:italic;font-weight:800;font-size:22px}
+.foot a{color:#fff;text-decoration:none}
+.foot .links{display:flex;gap:18px;flex-wrap:wrap}
+.foot small{display:block;font-size:15px;color:#aab3cc}
+.hero.small{min-height:0;background:none;padding:12px 0 8px;display:grid;justify-content:start;align-items:start}
+.hero.small::after{display:none}
+.hero.small h1{font-family:var(--display);font-style:normal;font-weight:400;font-size:clamp(32px,7vw,52px);text-shadow:none;color:var(--ink);line-height:1.1}
+.hero.small p{margin:0;font-size:17px;color:var(--muted);max-width:70ch}
+.hero.small .eyebrow{color:var(--sea)}
+.pg{display:contents}
+.pgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.p101 .pcard{display:grid;gap:8px;align-content:start;padding:20px 22px;border-radius:16px}
+.p101 .pcard h2{font-family:var(--display);font-weight:400;font-size:24px;margin:0;line-height:1.15}
+.p101 .pcard .pb{margin:0}
+.p101 .gloss{margin-top:28px;display:grid;gap:12px}
+.p101 .gloss h2{font-family:var(--display);font-weight:400;font-size:22px;margin:0}
 </style>
 
+<nav class="topnav" aria-label="Main">
+  <a href="#/" class="brand" id="brand"><span class="bm">JEJU</span><span class="bm b2">RACING</span></a>
+  <button type="button" class="burger" id="burger" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
+  <div class="navr" id="navr">
+    <div class="navtabs" id="navtabs">
+      <a href="#/card" data-r="card"></a><a href="#/results" data-r="results"></a><a href="#/101" data-r="101"></a>
+    </div>
+    <div class="lang" role="group" aria-label="Language">
+      <button type="button" id="lang-ko" aria-pressed="true">한국어</button>
+      <button type="button" id="lang-en" aria-pressed="false">English</button>
+    </div>
+  </div>
+</nav>
+<section class="home" id="home" hidden></section>
 <div class="wrap">
+  <section class="p101" id="p101" hidden></section>
+  <div id="pgCard" class="pg" hidden>
   <header class="day">
     <div class="toprow">
       <div>
         <div class="eyebrow" id="t-eyebrow"></div>
         <h1 id="dayTitle"></h1>
       </div>
-      <div class="tools"><button type="button" id="primerBtn" class="primerbtn"></button>
-      <div class="lang" role="group" aria-label="Language">
-        <button type="button" id="lang-ko" aria-pressed="true">한국어</button>
-        <button type="button" id="lang-en" aria-pressed="false">English</button>
-      </div></div>
     </div>
     <div class="facts" id="dayFacts"></div>
     <div class="days" id="days" role="group" aria-label="Race days"></div>
@@ -323,10 +413,13 @@ ol.order li.me{font-weight:700}
   <nav class="strip" id="strip" aria-label="Races"></nav>
 
   <main class="race" id="race"></main>
+  </div>
 
+  <div id="pgResults" class="pg" hidden>
   <section class="results" id="results"></section>
+  </div>
 
-  <section class="gloss">
+  <section class="gloss" id="gloss">
     <h2 id="t-gloss"></h2>
     <div class="terms" id="terms"></div>
   </section>
@@ -347,6 +440,7 @@ ol.order li.me{font-weight:700}
     </div>
   </section>
 </div>
+<footer class="foot" id="foot"></footer>
 
 <script>
 const LIVE_RUNS = [{"raceNo":1,"raceDt":20261005,"hrnm":"천하통일","latstTrea1Txt":"2026.08.30정치,낭치","latstTrea2Txt":"-","latstBledg1":"-","latstBledg2":"-","asisEquip1":"-","asisEquip2":"-","asisEquip3":"-","asisEquip4":"-","asisEquip5":"-"},{"raceNo":1,"raceDt":20261005,"hrnm":"블랙문","latstTrea1Txt":"2026.09.13운동기질환 기타","latstTrea2Txt":"2026.08.16정치,낭치","latstBledg1":"-","latstBledg2":"-","asisEquip1":"-","asisEquip2":"-","asisEquip3":"-","asisEquip4":"-","asisEquip5":"-"},{"raceNo":1,"raceDt":20261005,"hrnm":"삼다누리","latstTrea1Txt":"-","latstTrea2Txt":"-","latstBledg1":"-","latstBledg2":"-","asisEquip1":"-","asisEquip2":"-","asisEquip3":"-","asisEquip4":"-","asisEquip5":"-"},{"raceNo":1,"raceDt":20261005,"hrnm":"비상천하","latstTrea1Txt":"-","latstTrea2Txt":"-","latstBledg1":"-","latstBledg2":"-","asisEquip1":"-","asisEquip2":"-","asisEquip3":"-","asisEquip4":"-","asisEquip5":"-"},{"raceNo":1,"raceDt":20261005,"hrnm":"아라천마","latstTrea1Txt":"-","latstTrea2Txt":"-","latstBledg1":"-","latstBledg2":"-","asisEquip1":"-","asisEquip2":"-","asisEquip3":"-","asisEquip4":"-","asisEquip5":"-"},{"raceNo":1,"raceDt":20261005,"hrnm":"한결","latstTrea1Txt":"2026.09.09마체검사","latstTrea2Txt":"-","latstBledg1":"-","latstBledg2":"-","asisEquip1":"-","asisEquip2":"-","asisEquip3":"-","asisEquip4":"-","asisEquip5":"-"},{"raceNo":1,"raceDt":20261005,"hrnm":"해뜨고","latstTrea1Txt":"-","latstTrea2Txt":"-","latstBledg1":"-","latstBledg2":"-","asisEquip1":"-","asisEquip2":"-","asisEquip3":"-","asisEquip4":"-","asisEquip5":"-"},{"raceNo":1,"raceDt":20261005,"hrnm":"붉은진주","latstTrea1Txt":"2026.09.04감기","latstTrea2Txt":"2026.08.17운동기질환 기타","latstBledg1":"-","latstBledg2":"-","asisEquip1":"-","asisEquip2":"-","asisEquip3":"-","asisEquip4":"-","asisEquip5":"-"},{"raceNo":1,"raceDt":20261005,"hrnm":"청풍제주","latstTrea1Txt":"-","latstTrea2Txt":"-","latstBledg1":"-","latstBledg2":"-","asisEquip1":"-","asisEquip2":"-","asisEquip3":"-","asisEquip4":"-","asisEquip5":"-"},{"raceNo":1,"raceDt":20261005,"hrnm":"돈마비행","latstTrea1Txt":"-","latstTrea2Txt":"-","latstBledg1":"-","latstBledg2":"-","asisEquip1":"-","asisEquip2":"-","asisEquip3":"-","asisEquip4":"-","asisEquip5":"-"},{"raceNo":2,"raceDt":20261005,"hrnm":"전농볼트","latstTrea1Txt":"-","latstTrea2Txt":"-","latstBledg1":"-","latstBledg2":"-","asisEquip1":"-","asisEquip2":"-","asisEquip3":"-","asisEquip4":"-","asisEquip5":"-"},{"raceNo":2,"raceDt":20261005,"hrnm":"천추만대","latstTrea1Txt":"2026.09.13정치","latstTrea2Txt":"-","latstBledg1":"-","latstBledg2":"-","asisEquip1":"-","asisEquip2":"-","asisEquip3":"-","asisEquip4":"-","asisEquip5":"-"},{"raceNo":2,"raceDt":20261005,"hrnm":"대보","latstTrea1Txt":"2026.08.16운동기질환 기타","latstTrea2Txt":"-","latstBledg1":"-","latstBledg2":"-","asisEquip1":"-","asisEquip2":"-","asisEquip3":"-","asisEquip4":"-","asisEquip5":"-"},{"raceNo":2,"raceDt":20261005,"hrnm":"광풍만리","latstTrea1Txt":"-","latstTrea2Txt":"-","latstBledg1":"-","latstBledg2":"-","asisEquip1":"-","asisEquip2":"-","asisEquip3":"-","asisEquip4":"-","asisEquip5":"-"},{"raceNo":2,"raceDt":20261005,"hrnm":"끝판왕","latstTrea1Txt":"-","latstTrea2Txt":"-","latstBledg1":"-","latstBledg2":"-","asisEquip1":"-","asisEquip2":"-","asisEquip3":"-","asisEquip4":"-","asisEquip5":"-"},{"raceNo":2,"raceDt":20261005,"hrnm":"마패도끼","latstTrea1Txt":"-","latstTrea2Txt":"-","latstBledg1":"-","latstBledg2":"-","asisEquip1":"-","asisEquip2":"-","asisEquip3":"-","asisEquip4":"-","asisEquip5":"-"},{"raceNo":2,"raceDt":20261005,"hrnm":"신천여제","latstTrea1Txt":"2026.09.13운동기질환 기타","latstTrea2Txt":"2026.08.30우전지파행","latstBledg1":"-","latstBledg2":"-","asisEquip1":"-","asisEquip2":"-","asisEquip3":"-","asisEquip4":"-","asisEquip5":"-"},{"raceNo":2,"raceDt":20261005,"hrnm":"마패창","latstTrea1Txt":"-","latstTrea2Txt":"-","latstBledg1":"-","latstBledg2":"-","asisEquip1":"-","asisEquip2":"-","asisEquip3":"-","asisEquip4":"-","asisEquip5":"-"},{"raceNo":2,"raceDt":20261005,"hrnm":"한판승","latstTrea1Txt":"-","latstTrea2Txt":"-","latstBledg1":"-","latstBledg2":"-","asisEquip1":"-","asisEquip2":"-","asisEquip3":"-","asisEquip4":"-","asisEquip5":"-"},{"raceNo":2,"raceDt":20261005,"hrnm":"자유열매","latstTrea1Txt":"2026.08.30운동기질환 기타","latstTrea2Txt":"-","latstBledg1":"-","latstBledg2":"-","asisEquip1":"-","asisEquip2":"-","asisEquip3":"-","asisEquip4":"-","asisEquip5":"-"},{"raceNo":3,"raceDt":20261005,"hrnm":"황제대로","latstTrea1Txt":"-","latstTrea2Txt":"-","latstBledg1":"-","latstBledg2":"-","asisEquip1":"-","asisEquip2":"-","asisEquip3":"-","asisEquip4":"-","asisEquip5":"-"},{"raceNo":3,"raceDt":20261005,"hrnm":"빛나는순간","latstTrea1Txt":"-","latstTrea2Txt":"-","latstBledg1":"-","latstBledg2":"-","asisEquip1":"-","asisEquip2":"-","asisEquip3":"-","asisEquip4":"-","asisEquip5":"-"},{"raceNo":3,"raceDt":20261005,"hrnm":"거장","latstTrea1Txt":"-","latstTrea2Txt":"-","latstBledg1":"-","latstBledg2":"-","asisEquip1":"-","asisEquip2":"-","asisEquip3":"-","asisEquip4":"-","asisEquip5":"-"},{"raceNo":3,"raceDt":20261005,"hrnm":"신통방통","latstTrea1Txt":"-","latstTrea2Txt":"-","latstBledg1":"-","latstBledg2":"-","asisEquip1":"-","asisEquip2":"-","asisEquip3":"-","asisEquip4":"-","asisEquip5":"-"},{"raceNo":3,"raceDt":20261005,"hrnm":"골든보이","latstTrea1Txt":"-","latstTrea2Txt":"-","latstBledg1":"-","latstBledg2":"-","asisEquip1":"-","asisEquip2":"-","asisEquip3":"-","asisEquip4":"-","asisEquip5":"-"},{"raceNo":3,"raceDt":20261005,"hrnm":"무주영웅","latstTrea1Txt":"2026.07.22임신검사","latstTrea2Txt":"-","latstBledg1":"-","latstBledg2":"-","asisEquip1":"-","asisEquip2":"-","asisEquip3":"-","asisEquip4":"-","asisEquip5":"-"},{"raceNo":3,"raceDt":20261005,"hrnm":"뚜벅이","latstTrea1Txt":"2026.08.22우전우후지파행","latstTrea2Txt":"2026.07.19양후지파행","latstBledg1":"-","latstBledg2":"-","asisEquip1":"-","asisEquip2":"-","asisEquip3":"-","asisEquip4":"-","asisEquip5":"-"},{"raceNo":3,"raceDt":20261005,"hrnm":"라스트타임","latstTrea1Txt":"-","latstTrea2Txt":"-","latstBledg1":"-","latstBledg2":"-","asisEquip1":"-","asisEquip2":"-","asisEquip3":"-","asisEquip4":"-","asisEquip5":"-"},{"raceNo":3,"raceDt":20261005,"hrnm":"서산히어로","latstTrea1Txt":"2026.09.13우전지파행","latstTrea2Txt":"-","latstBledg1":"-","latstBledg2":"-","asisEquip1":"-","asisEquip2":"-","asisEquip3":"-","asisEquip4":"-","asisEquip5":"-"},{"raceNo":3,"raceDt":20261005,"hrnm":"최고정점","latstTrea1Txt":"-","latstTrea2Txt":"-","latstBledg1":"-","latstBledg2":"-","asisEquip1":"-","asisEquip2":"-","asisEquip3":"-","asisEquip4":"-","asisEquip5":"-"},{"raceNo":4,"raceDt":20261005,"hrnm":"독차지","latstTrea1Txt":"-","latstTrea2Txt":"-","latstBledg1":"-","latstBledg2":"-","asisEquip1":"-","asisEquip2":"-","asisEquip3":"-","asisEquip4":"-","asisEquip5":"-"},{"raceNo":4,"raceDt":20261005,"hrnm":"으뜸여신","latstTrea1Txt":"2026.07.23식이성 식욕부진","latstTrea2Txt":"-","latstBledg1":"-","latstBledg2":"-","asisEquip1":"-","asisEquip2":"-","asisEquip3":"-","asisEquip4":"-","asisEquip5":"-"},{"raceNo":4,"raceDt":20261005,"hrnm":"붉은노을","latstTrea1Txt":"-","latstTrea2Txt":"-","latstBledg1":"-","latstBledg2":"-","asisEquip1":"-","asisEquip2":"-","asisEquip3":"-","asisEquip4":"-","asisEquip5":"-"},{"raceNo":4,"raceDt":20261005,"hrnm":"금지게","latstTrea1Txt":"2026.08.07건강검진","latstTrea2Txt":"-","latstBledg1":"-","latstBledg2":"-","asisEquip1":"-","asisEquip2":"-","asisEquip3":"-","asisEquip4":"-","asisEquip5":"-"},{"raceNo":4,"raceDt":20261005,"hrnm":"아름나","latstTrea1Txt":"-","latstTrea2Txt":"-","latstBledg1":"-","latstBledg2":"-","asisEquip1":"-","asisEquip2":"-","asisEquip3":"-","asisEquip4":"-","asisEquip5":"-"},{"raceNo":4,"raceDt":20261005,"hrnm":"세모다","latstTrea1Txt":"-","latstTrea2Txt":"-","latstBledg1":"-","latstBledg2":"-","asisEquip1":"-","asisEquip2":"-","asisEquip3":"-","asisEquip4":"-","asisEquip5":"-"},{"raceNo":4,"raceDt":20261005,"hrnm":"유비군자","latstTrea1Txt":"2026.07.25운동기질환 기타","latstTrea2Txt":"-","latstBledg1":"-","latstBledg2":"-","asisEquip1":"-","asisEquip2":"-","asisEquip3":"-","asisEquip4":"-","asisEquip5":"-"},{"raceNo":4,"raceDt":20261005,"hrnm":"불꽃강자","latstTrea1Txt":"-","latstTrea2Txt":"-","latstBledg1":"-","latstBledg2":"-","asisEquip1":"-","asisEquip2":"-","asisEquip3":"-","asisEquip4":"-","asisEquip5":"-"},{"raceNo":4,"raceDt":20261005,"hrnm":"아리향","latstTrea1Txt":"-","latstTrea2Txt":"-","latstBledg1":"-","latstBledg2":"-","asisEquip1":"-","asisEquip2":"-","asisEquip3":"-","asisEquip4":"-","asisEquip5":"-"},{"raceNo":4,"raceDt":20261005,"hrnm":"한백최강","latstTrea1Txt":"-","latstTrea2Txt":"-","latstBledg1":"-","latstBledg2":"-","asisEquip1":"-","asisEquip2":"-","asisEquip3":"-","asisEquip4":"-","asisEquip5":"-"},{"raceNo":5,"raceDt":20261005,"hrnm":"대별왕","latstTrea1Txt":"-","latstTrea2Txt":"-","latstBledg1":"-","latstBledg2":"-","asisEquip1":"-","asisEquip2":"-","asisEquip3":"-","asisEquip4":"-","asisEquip5":"-"},{"raceNo":5,"raceDt":20261005,"hrnm":"태흥신공","latstTrea1Txt":"2026.07.25양전지파행,낭치","latstTrea2Txt":"-","latstBledg1":"-","latstBledg2":"-","asisEquip1":"-","asisEquip2":"-","asisEquip3":"-","asisEquip4":"-","asisEquip5":"-"},{"raceNo":5,"raceDt":20261005,"hrnm":"달의강자","latstTrea1Txt":"-","latstTrea2Txt":"-","latstBledg1":"-","latstBledg2":"-","asisEquip1":"-","asisEquip2":"-","asisEquip3":"-","asisEquip4":"-","asisEquip5":"-"},{"raceNo":5,"raceDt":20261005,"hrnm":"미래세계","latstTrea1Txt":"-","latstTrea2Txt":"-","latstBledg1":"-","latstBledg2":"-","asisEquip1":"-","asisEquip2":"-","asisEquip3":"-","asisEquip4":"-","asisEquip5":"-"},{"raceNo":5,"raceDt":20261005,"hrnm":"용감무쌍","latstTrea1Txt":"2026.09.19좌전지파행","latstTrea2Txt":"-","latstBledg1":"-","latstBledg2":"-","asisEquip1":"-","asisEquip2":"-","asisEquip3":"-","asisEquip4":"-","asisEquip5":"-"},{"raceNo":5,"raceDt":20261005,"hrnm":"명품행진","latstTrea1Txt":"-","latstTrea2Txt":"-","latstBledg1":"-","latstBledg2":"-","asisEquip1":"-","asisEquip2":"-","asisEquip3":"-","asisEquip4":"-","asisEquip5":"-"},{"raceNo":5,"raceDt":20261005,"hrnm":"신수","latstTrea1Txt":"-","latstTrea2Txt":"-","latstBledg1":"-","latstBledg2":"-","asisEquip1":"-","asisEquip2":"-","asisEquip3":"-","asisEquip4":"-","asisEquip5":"-"},{"raceNo":5,"raceDt":20261005,"hrnm":"디아즈타임","latstTrea1Txt":"-","latstTrea2Txt":"-","latstBledg1":"-","latstBledg2":"-","asisEquip1":"-","asisEquip2":"-","asisEquip3":"-","asisEquip4":"-","asisEquip5":"-"},{"raceNo":5,"raceDt":20261005,"hrnm":"전승소녀","latstTrea1Txt":"2026.09.02식이성 식욕부진","latstTrea2Txt":"-","latstBledg1":"-","latstBledg2":"-","asisEquip1":"-","asisEquip2":"-","asisEquip3":"-","asisEquip4":"-","asisEquip5":"-"},{"raceNo":5,"raceDt":20261005,"hrnm":"새벽천하","latstTrea1Txt":"2026.09.12운동기질환 기타","latstTrea2Txt":"2026.07.18좌전지파행","latstBledg1":"-","latstBledg2":"-","asisEquip1":"-","asisEquip2":"-","asisEquip3":"-","asisEquip4":"-","asisEquip5":"-"},{"raceNo":6,"raceDt":20261005,"hrnm":"삼황오제","latstTrea1Txt":"-","latstTrea2Txt":"-","latstBledg1":"-","latstBledg2":"-","asisEquip1":"-","asisEquip2":"-","asisEquip3":"-","asisEquip4":"-","asisEquip5":"-"},{"raceNo":6,"raceDt":20261005,"hrnm":"천마용사","latstTrea1Txt":"-","latstTrea2Txt":"-","latstBledg1":"-","latstBledg2":"-","asisEquip1":"-","asisEquip2":"-","asisEquip3":"-","asisEquip4":"-","asisEquip5":"-"},{"raceNo":6,"raceDt":20261005,"hrnm":"용담천하","latstTrea1Txt":"2026.09.06정치","latstTrea2Txt":"2026.07.27일,열사병","latstBledg1":"-","latstBledg2":"-","asisEquip1":"-","asisEquip2":"-","asisEquip3":"-","asisEquip4":"-","asisEquip5":"-"},{"raceNo":6,"raceDt":20261005,"hrnm":"청룡도","latstTrea1Txt":"2026.08.30정치","latstTrea2Txt":"-","latstBledg1":"-","latstBledg2":"-","asisEquip1":"-","asisEquip2":"-","asisEquip3":"-","asisEquip4":"-","asisEquip5":"-"},{"raceNo":6,"raceDt":20261005,"hrnm":"육탄왕자","latstTrea1Txt":"-","latstTrea2Txt":"-","latstBledg1":"-","latstBledg2":"-","asisEquip1":"-","asisEquip2":"-","asisEquip3":"-","asisEquip4":"-","asisEquip5":"-"},{"raceNo":6,"raceDt":20261005,"hrnm":"천하평정","latstTrea1Txt":"2026.07.14우상완부찰과상","latstTrea2Txt":"-","latstBledg1":"-","latstBledg2":"-","asisEquip1":"-","asisEquip2":"-","asisEquip3":"-","asisEquip4":"-","asisEquip5":"-"},{"raceNo":6,"raceDt":20261005,"hrnm":"전농미르","latstTrea1Txt":"-","latstTrea2Txt":"-","latstBledg1":"-","latstBledg2":"-","asisEquip1":"-","asisEquip2":"-","asisEquip3":"-","asisEquip4":"-","asisEquip5":"-"},{"raceNo":7,"raceDt":20261005,"hrnm":"소왕산","latstTrea1Txt":"-","latstTrea2Txt":"-","latstBledg1":"-","latstBledg2":"-","asisEquip1":"-","asisEquip2":"-","asisEquip3":"-","asisEquip4":"-","asisEquip5":"-"},{"raceNo":7,"raceDt":20261005,"hrnm":"백용해","latstTrea1Txt":"2026.09.13정치","latstTrea2Txt":"-","latstBledg1":"-","latstBledg2":"-","asisEquip1":"-","asisEquip2":"-","asisEquip3":"-","asisEquip4":"-","asisEquip5":"-"},{"raceNo":7,"raceDt":20261005,"hrnm":"전설무적","latstTrea1Txt":"-","latstTrea2Txt":"-","latstBledg1":"-","latstBledg2":"-","asisEquip1":"-","asisEquip2":"-","asisEquip3":"-","asisEquip4":"-","asisEquip5":"-"},{"raceNo":7,"raceDt":20261005,"hrnm":"백룡의힘","latstTrea1Txt":"2026.08.17양전지파행","latstTrea2Txt":"-","latstBledg1":"-","latstBledg2":"-","asisEquip1":"-","asisEquip2":"-","asisEquip3":"-","asisEquip4":"-","asisEquip5":"-"},{"raceNo":7,"raceDt":20261005,"hrnm":"유달리","latstTrea1Txt":"-","latstTrea2Txt":"-","latstBledg1":"-","latstBledg2":"-","asisEquip1":"-","asisEquip2":"-","asisEquip3":"-","asisEquip4":"-","asisEquip5":"-"},{"raceNo":7,"raceDt":20261005,"hrnm":"비천도해","latstTrea1Txt":"-","latstTrea2Txt":"-","latstBledg1":"-","latstBledg2":"-","asisEquip1":"-","asisEquip2":"-","asisEquip3":"-","asisEquip4":"-","asisEquip5":"-"},{"raceNo":7,"raceDt":20261005,"hrnm":"장전공주","latstTrea1Txt":"-","latstTrea2Txt":"-","latstBledg1":"-","latstBledg2":"-","asisEquip1":"-","asisEquip2":"-","asisEquip3":"-","asisEquip4":"-","asisEquip5":"-"},{"raceNo":7,"raceDt":20261005,"hrnm":"강철빛","latstTrea1Txt":"-","latstTrea2Txt":"-","latstBledg1":"-","latstBledg2":"-","asisEquip1":"-","asisEquip2":"-","asisEquip3":"-","asisEquip4":"-","asisEquip5":"-"}];
@@ -416,7 +510,7 @@ const T = {
   lgField:"출전 두수",noForm:"최근 한 달 안에 뛴 경주가 없습니다.",fieldNote2:"가는 선은 같은 경주 다른 말들의 값, 굵은 막대는 이 말의 값입니다. # 는 경주 내 순위입니다.",
   mWin:"통산 승률",top3:"복삼승률",lastRun:"마지막 출전",last30:"최근 30일 (제주)",rides:"출전",wins:"1착",careerWin:"통산 승률 기준",newestFirst:"← 최근",noRecent:"최근 30일 출전 기록이 없습니다.",noStats:"통산 성적 데이터가 없습니다.",
   chRankJ:"제주 기수 통산 승률 순위 (100전 이상)",chRankT:"제주 조교사 통산 승률 순위 (100두 이상)",chOutcome:"통산 결과 구성",o1:"1착",o2:"2착",o3:"3착",oOther:"4착 이하",todayRides:"이 경주일 출전",openCharts:"이름을 누르면 그래프",
-  resTitle:"경주 결과",resLede:"최근 한 달간 제주 경주 결과입니다. 위 출전표에 나오는 말에는 '레이스카드 출전' 표시가 붙고, 이 결과로 출전표의 '최근 5전'을 계산합니다.",
+  resTitle:"경주 결과",resLede:"최근 한 달간 제주 경주 결과입니다. 다가오는 레이스카드에 나오는 말에는 '레이스카드 출전' 표시가 붙고, 이 결과로 레이스카드의 '최근 5전'을 계산합니다.",
   trial:"주행심사",raceDay:"경주",goingWord:"주로",winTime:"1위 기록",inCard:"레이스카드 출전",
   rcols:["착순","마명","기수","부담","마체중","레이팅","기록","1위와 차","착차","단승"],
   trialNote:"주행심사는 데뷔 전이나 오랜 휴양 뒤에 말이 경주를 뛸 수 있는지 확인하는 주행입니다. 상금과 착차가 없고 기록만 남습니다.",
@@ -490,7 +584,7 @@ const T = {
   lgField:"field size",noForm:"No runs in the past month.",fieldNote2:"Thin lines are the other runners in this race; the solid bar is this horse. # is its rank in the field.",
   mWin:"Career win %",top3:"Top-3",lastRun:"Last run",last30:"Last 30 days (Jeju)",rides:"rides",wins:"Wins",careerWin:"career win rate",newestFirst:"← newest",noRecent:"No rides in the last 30 days.",noStats:"No career data.",
   chRankJ:"Jeju jockeys by career win rate (100+ rides)",chRankT:"Jeju trainers by career win rate (100+ runners)",chOutcome:"Career outcomes",o1:"1st",o2:"2nd",o3:"3rd",oOther:"4th or worse",todayRides:"Runners this race day",openCharts:"tap a name for charts",
-  resTitle:"Results",resLede:"Jeju results from the past month. Horses on the race card above are tagged, and these results feed the card's Last 5 column.",
+  resTitle:"Results",resLede:"Jeju results from the past month. Horses on the upcoming race card are tagged, and these results feed the card's Last 5 column.",
   trial:"Trial",raceDay:"Races",goingWord:"Going",winTime:"Winning time",inCard:"On race card",
   rcols:["Pos","Horse","Jockey","Wt","Body wt","Rating","Time","Behind","Margin","SP"],
   trialNote:"A trial checks that a horse is fit to race, before its debut or after a long break. There is no prize money and no official margins, only times.",
@@ -561,11 +655,42 @@ function goingInfo(g){ const m=String(g||"").match(/^([^(]+)\(?(\d+)?/); return 
 function parseDate(r){ const s=String(r.raceDt||""); return {y:s.slice(0,4),m:+s.slice(4,6),d:+s.slice(6,8),dw:r.raceDotw||""}; }
 function ratingLabel(s){ if(!s||s==="-")return "-"; if(s==="R0~0") return lang==="ko"?"신마·미승리마 (R0)":"Unrated (R0)"; return s.replace("~",lang==="ko"?"~":"–"); }
 
+/* ---- 화면 전환(홈 / 레이스카드 / 결과 / 101) ---- */
+const ROUTES=["card","results","101"];
+function curRoute(){ const h=location.hash.replace(/^#\/?/,"").split("/")[0]; return ROUTES.includes(h)?h:"home"; }
+function route(){
+  const r=curRoute(); $("home").hidden=r!=="home"; document.querySelector(".wrap").hidden=r==="home"; $("pgCard").hidden=r!=="card"; $("pgResults").hidden=r!=="results"; $("p101").hidden=r!=="101";
+  $("gloss").hidden=r!=="card"; document.querySelector(".load").hidden=!(r==="card"||r==="results");
+  if(r==="results"&&!resGroups().length){ $("results").hidden=false; $("results").innerHTML=`<h2>${T[lang].resTitle}</h2><p class="noent">${T[lang].noResults}</p>`; }
+  document.querySelectorAll("#navtabs a").forEach(a=>a.setAttribute("aria-current",a.dataset.r===r?"page":"false"));
+  if(drawerState) closeDrawer();
+}
+window.addEventListener("hashchange",()=>{route(); window.scrollTo(0,0);});
+function renderNav(){ const t=T[lang]; document.querySelectorAll("#navtabs a").forEach(a=>a.textContent=t.nav[a.dataset.r]); }
+function fmtDay(k){ return lang==="ko"?`${k.slice(0,4)}.${k.slice(4,6)}.${k.slice(6)}`:`${+k.slice(6)} ${MONTHS[+k.slice(4,6)-1].slice(0,3)} ${k.slice(0,4)}`; }
+function renderHome(){
+  const t=T[lang], dy=days.get(curDay), last=resGroups().filter(g=>g[1][0].gbn==="R").pop();
+  const dstr=curDay?(lang==="ko"?`${+curDay.slice(4,6)}월 ${+curDay.slice(6)}일`:`${+curDay.slice(6)} ${MONTHS[+curDay.slice(4,6)-1]}`):"";
+  const meta={card:dy?`${t.nextMeet(fmtDay(curDay))} · ${t.racesN(races.length)}`:"",results:last?t.lastMeet(last[1][0].date.replace(/\//g,".")):"","101":t.cards(PRIMER.length)};
+  $("home").innerHTML=`<div class="hero"><div class="ht"><div class="yr">${curDay?curDay.slice(0,4):"2026"}</div><h1>${lang==="ko"?"제주경마":"JEJU<br>RACING"}</h1><div class="sub">${t.heroSub(dstr,races.length)}</div>
+      <div class="cta"><a href="#/card">${t.heroCta[0]}</a><a href="#/101" class="alt">${t.heroCta[1]}</a></div></div></div>
+    <div class="hsec"><h2 class="kick">${t.explore}</h2><p class="lede2">${t.exploreLede}</p>
+    <div class="hcards">${ROUTES.map((r,i)=>`<a class="hcard" href="#/${r}"><span class="hnum">0${i+1}</span><h2>${t.nav[r]}</h2><p>${t.homeCards[r][0]}</p><span class="hmeta">${meta[r]}</span><span class="hgo">${t.homeCards[r][1]} →</span></a>`).join("")}</div></div>`;
+  $("foot").innerHTML=`<div class="in"><div class="ft">${t.footTitle}</div><div>${t.footOrg}<small>${t.footData}</small></div><div class="links"><a href="#/card">${t.nav.card}</a><a href="#/results">${t.nav.results}</a><a href="#/101">${t.nav["101"]}</a></div><small>${t.footNote} · © ${new Date().getFullYear()} ${t.footTitle}</small></div>`;
+}
+$("burger").onclick=()=>{const n=document.querySelector(".topnav"); const o=n.classList.toggle("open"); $("burger").setAttribute("aria-expanded",o);};
+document.querySelectorAll("#navtabs a").forEach(a=>a.addEventListener("click",()=>document.querySelector(".topnav").classList.remove("open")));
+function render101(){ const t=T[lang], i=lang==="ko"?0:1;
+  $("p101").innerHTML=`<div class="hero small"><div class="eyebrow">${t.nav["101"]}</div><h1>${t.primerTitle}</h1><p>${t.primerLede}</p></div>
+    <div class="pgrid">${PRIMER.map((c,n)=>`<article class="pcard" id="pp-${c.k}"><span class="hnum">0${n+1}</span><h2>${c.t[i]}</h2><div class="pb">${c.b[i]}</div><span class="src">${c.s}</span></article>`).join("")}</div>
+    <section class="gloss"><h2>${t.gloss}</h2><div class="terms">${TERMS[lang].map(([a,b])=>`<div class="term"><b>${a}</b><p>${b}</p></div>`).join("")}</div></section>`;
+}
+
 function render(){
   const t=T[lang]; document.documentElement.lang=lang;
   $("lang-ko").setAttribute("aria-pressed",lang==="ko"); $("lang-en").setAttribute("aria-pressed",lang==="en");
   ["eyebrow","gloss","load","loadhelp"].forEach(k=>$("t-"+k).textContent=t[k]);
-  $("primerBtn").textContent=t.primerBtn; $("loadBtn").textContent=t.loadBtn; $("fileLbl").textContent=t.fileBtn; $("resetBtn").textContent=t.resetBtn;
+  $("loadBtn").textContent=t.loadBtn; $("fileLbl").textContent=t.fileBtn; $("resetBtn").textContent=t.resetBtn;
   const r0=races[0], d=parseDate(r0), g=goingInfo(r0.going);
   $("dayTitle").textContent=t.title(d);
   const dy=days.get(curDay);
@@ -576,7 +701,7 @@ function render(){
     <span class="rno">${r.raceNo}R</span><span class="rclass">${esc(classLabel(r.raceClas))}</span>
     <span class="rmeta">${esc(r.strtTm||r.strtPargTm)} · ${r.raceDs}m</span></button>`).join("");
   $("strip").querySelectorAll(".rbtn").forEach(b=>b.onclick=()=>{sel=+b.dataset.i;hsel=null;rsel=null;render();});
-  renderRace(); renderResults(); renderTerms();
+  renderRace(); renderResults(); renderTerms(); renderNav(); renderHome(); render101(); route();
 }
 
 function renderRace(){
@@ -1044,8 +1169,8 @@ const PRIMER=[
   s:"2026 Jeju Racing Plan, p.16"}
 ];
 const GLKEY={class:"class",rating:"class",weight:"weight",apprentice:"weight",trial:"trials",breed:"horses",prize:"prize",distance:"distance",card:"card"};
-Object.assign(T.ko,{storyTab:"스토리",primerBtn:"제주경마 입문",primerTitle:"제주경마 입문",primerLede:"외국에서 처음 보시는 분을 위한 짧은 안내입니다. 숫자는 한국마사회 「2026년 제주경마 시행계획」 기준입니다."});
-Object.assign(T.en,{storyTab:"Story",primerBtn:"Jeju 101",primerTitle:"Jeju racing 101",primerLede:"A short guide for first-time viewers. Figures are from KRA's 2026 Jeju Racing Plan."});
+Object.assign(T.ko,{brand:"제주경마",nav:{card:"레이스카드",results:"경주 결과","101":"JEJU 101"},homeKicker:"제주경마공원 · 한국 조랑말 경주",homeTitle:"제주경마, 처음이라도 읽히게",homeLede:"서러브레드만 보던 분을 위한 제주 조랑말 경주 안내서입니다. 다가오는 출전표, 지난 결과, 그리고 규칙을 한눈에.",homeCards:{card:["다가오는 경주의 출전표와 경주별 스토리, 모델 순위, 말·기수·조교사 기록을 봅니다.","레이스카드 보기"],results:["지난 한 달 경주 결과와 구간별 전개를 트랙 위에서 다시 봅니다.","결과 보기"],"101":["등급, 레이팅, 부담중량, 상금, 심사 제도까지 처음 보는 분을 위한 짧은 카드 모음.","입문서 읽기"]},nextMeet:d=>`다음 경주일 ${d}`,lastMeet:d=>`최근 결과 ${d}`,cards:n=>`카드 ${n}장`,racesN:n=>`${n}경주`,noResults:"아직 불러온 경주 결과가 없습니다.",heroSub:(d,n)=>`다음 경주일 ${d} · ${n}경주 · 제주경마공원`,heroCta:["레이스카드 보기","제주경마 입문"],explore:"무엇을 보시겠어요?",exploreLede:"다가오는 출전표, 지난 결과, 그리고 처음 보는 분을 위한 안내서.",footTitle:"제주경마 가이드",footOrg:"한국마사회 · 제주경마공원",footData:"데이터: 한국마사회 공공데이터(data.go.kr) · 규칙: 2026년 제주경마 시행계획",footNote:"비공식 안내 페이지입니다. 베팅은 각 지역의 법률에 따르세요.",storyTab:"스토리",primerBtn:"제주경마 입문",primerTitle:"제주경마 입문",primerLede:"외국에서 처음 보시는 분을 위한 짧은 안내입니다. 숫자는 한국마사회 「2026년 제주경마 시행계획」 기준입니다."});
+Object.assign(T.en,{brand:"Jeju Racing",nav:{card:"Race Card",results:"Results","101":"Jeju 101"},homeKicker:"Jeju Racecourse · Korean pony racing",homeTitle:"Jeju racing, explained for first-timers",homeLede:"A guide to Korean pony racing for punters who know Thoroughbreds. Upcoming race cards, past results, and how it all works.",homeCards:{card:["Upcoming race cards with a story for each race, model rankings, and horse, jockey and trainer records.","Open the race card"],results:["Results from the past month, with the pace of each race replayed on the track.","See results"],"101":["Classes, ratings, weights, prize money and trials: short cards for newcomers.","Read the primer"]},nextMeet:d=>`Next meeting ${d}`,lastMeet:d=>`Latest results ${d}`,cards:n=>`${n} cards`,racesN:n=>`${n} races`,noResults:"No results loaded yet.",heroSub:(d,n)=>`Next meeting ${d} · ${n} races · Jeju Racecourse`,heroCta:["Open race card","Jeju 101"],explore:"Where to start",exploreLede:"Upcoming race cards, past results, and a primer for first-time viewers.",footTitle:"Jeju Racing Guide",footOrg:"Korea Racing Authority · Jeju Racecourse",footData:"Data: KRA open data (data.go.kr) · Rules: 2026 Jeju Racing Plan",footNote:"Unofficial guide. Wagering is subject to the laws of your jurisdiction.",storyTab:"Story",primerBtn:"Jeju 101",primerTitle:"Jeju racing 101",primerLede:"A short guide for first-time viewers. Figures are from KRA's 2026 Jeju Racing Plan."});
 function primerHtml(open){
   const t=T[lang], i=lang==="ko"?0:1;
   return `<section><h3>${t.primerTitle}</h3><p class="chnote">${t.primerLede}</p></section>`+PRIMER.map(c=>
@@ -1057,7 +1182,6 @@ function openPrimer(key){
   const el=key&&$("pc-"+key); if(el) el.scrollIntoView({block:"start"});
   $("dclose").focus();
 }
-$("primerBtn").onclick=()=>openPrimer();
 
 function runHist(name){ return recentFor(name).filter(r=>r.gbn==="R"); }
 function whyReasons(x,race){
