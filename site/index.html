@@ -413,6 +413,7 @@ tr.grp td{background:var(--chip);font-size:13px;padding:7px 10px;border-left:4px
 tr.grp td span{font-family:var(--mono);color:var(--muted);margin-left:4px}
 tr.grp td small{display:block;font-weight:400;color:var(--muted);font-size:12px}
 tr.grp.s-front td{border-left-color:#d3262b}tr.grp.s-stalk td{border-left-color:var(--tangerine)}tr.grp.s-mid td{border-left-color:var(--sea)}tr.grp.s-closer td{border-left-color:var(--navy)}
+.stsub{font-family:var(--mono);font-size:10.5px;white-space:nowrap}
 </style>
 
 <nav class="topnav" aria-label="Main">
@@ -534,7 +535,7 @@ const T = {
 <p><b>이 방식의 약점.</b> 격차 크기가 사라집니다. 레이팅이 101·100·99인 경주와 101·70·50인 경주에서 1위 말의 레이팅 점수는 둘 다 1.0으로 같지만, 실제로는 뒤쪽 경주의 1위가 훨씬 유리합니다. 경주 간 비교도 되지 않습니다. 1R의 36%와 7R의 36%는 같은 뜻이 아닙니다. 표본이 2~3두뿐인 요소는 상대 비교가 과장됩니다.</p>
 <p><b>다음 단계.</b> 레이팅 차이, 해당 거리 실제 승률처럼 절대 기준으로 먼저 점수를 매긴 뒤 경주 안에서 승률로 바꾸면 격차 크기가 살아납니다. 결과가 쌓이면 가중치를 손으로 정하는 대신 실제 결과에 맞춰 학습시킬 수 있습니다. 지금 버전은 그 전 단계의 참고용 모델입니다.</p>`,
   paceTitle:"전개 (구간 통과 순위)",finish:"결승",others:"4착 이하",paceNote:"S1F는 출발 후 첫 200m 지점, 2C~4C는 코너 통과, G1F는 결승 200m 전 순위입니다. 선에 마우스를 올리면 말별 통과 순위가 나옵니다. 결승선 옆 @는 단승 배당입니다.",
-  styleTitle:"주행 스타일",styles:{front:"선행",stalk:"선입",mid:"중단",closer:"추입",none:"기록 없음"},styleDesc:{front:"초반에 앞으로 나가 선두에서 달리는 말",stalk:"선두 바로 뒤에 붙어 가다 직선에서 겨루는 말",mid:"중위권에서 흐름을 보다 막판에 올라오는 말",closer:"후미에서 따라가다 마지막에 추입하는 말",none:"구간 통과 순위 기록이 아직 없는 말(신마 등)"},byStyle:"포지션별",byGate:"마번순",styleCol:"포지션",styleBasis:n=>`최근 ${n}전 기준`,lead:"선두",back:"후미",earlyAvg:"초반 평균",earlyPos:"S1F 통과 순위",finishPos:"결승 착순",
+  styleTitle:"주행 스타일",styles:{front:"선행",stalk:"선입",mid:"중단",closer:"추입",none:"기록 없음"},styleDesc:{front:"S1F·첫 코너에서 선두권, 4C까지 앞자리를 지키는 말",stalk:"초반 선두 바로 뒤(상위 45% 안)에서 따라가는 말",mid:"초반 중위권, 또는 뒤에서 4C까지 중위권으로 전진하는 말",closer:"초반 후미(하위 25%)에서 4C까지도 뒤에 있다가 직선에서 추입하는 말",none:"구간 통과 순위 기록이 아직 없는 말(신마 등)"},styleHow:"포지션은 최근 경주들의 S1F(출발 직후)와 첫 코너(2C, 없으면 3C) 통과 순위를 출전 두수로 나눠 평균한 값입니다. 상위 15% 선행, 40%까지 선입, 70%까지 중단, 그 뒤는 추입.",byStyle:"포지션별",byGate:"마번순",styleCol:"포지션",styleBasis:n=>`최근 ${n}전 · S1F와 첫 코너 통과 순위 평균`,lead:"선두",back:"후미",earlyAvg:"초반 평균",earlyPos:"S1F 통과 순위",finishPos:"결승 착순",
   styleNote:"각 선은 한 경주입니다. 왼쪽 점이 초반(S1F) 위치, 오른쪽 점이 결승 착순이며 경주 내 순위를 0(선두)~100(후미)으로 바꾼 값입니다.",loadedPace:n=>`구간 기록 ${n}건을 불러왔습니다.`,
   others2:"2착 이하",
   gateColors:"색 = 마번",ring:"테두리",
@@ -609,7 +610,7 @@ const T = {
 <p><b>The weakness.</b> The size of the gap is lost. In a race rated 101·100·99 and one rated 101·70·50, the top horse scores 1.0 for rating in both, yet the second horse is far better placed. Numbers are not comparable across races: 36% in race 1 does not mean the same as 36% in race 7. A factor with only two or three horses of data gets exaggerated.</p>
 <p><b>Next step.</b> Score factors on an absolute basis first (rating differences, actual win rate at the distance) and only then convert to a within-race percentage, so gap size survives. Once enough results accumulate, the weights can be fitted to outcomes instead of set by hand. This version is the reference model before that step.</p>`,
   paceTitle:"Pace (position at each call)",finish:"Finish",others:"4th or worse",paceNote:"S1F is 200m after the start, 2C–4C are the turns, G1F is 200m from home. Hover a line for that horse's calls. @ beside the finish is the win dividend (SP).",
-  styleTitle:"Running style",styles:{front:"Front runner",stalk:"On pace",mid:"Stalker",closer:"Closer",none:"No data"},styleDesc:{front:"Goes forward early and leads",stalk:"Sits just behind the leaders and challenges in the straight",mid:"Travels midfield and runs on late",closer:"Settles at the rear and finishes fast",none:"No sectional records yet (e.g. debutants)"},byStyle:"By position",byGate:"By gate",styleCol:"Position",styleBasis:n=>`last ${n} runs`,lead:"Lead",back:"Rear",earlyAvg:"Early avg",earlyPos:"Position at S1F",finishPos:"Finish",
+  styleTitle:"Running style",styles:{front:"Front runner",stalk:"On pace",mid:"Stalker",closer:"Closer",none:"No data"},styleDesc:{front:"In the first group at S1F and the first corner, and still in front at the 4C",stalk:"Sits just behind the leaders early (top 45%)",mid:"Midfield early, or comes from the back into midfield by the 4C",closer:"Rear early (bottom 25%) and still behind at the 4C, finishing in the straight",none:"No sectional records yet (e.g. debutants)"},styleHow:"Position is the average of each recent run's S1F (just after the start) and first-corner (2C, or 3C if none) placings, scaled by field size. Top 15% = front runner, to 40% on pace, to 70% stalker, beyond that closer.",byStyle:"By position",byGate:"By gate",styleCol:"Position",styleBasis:n=>`last ${n} runs · average of S1F and first-corner positions`,lead:"Lead",back:"Rear",earlyAvg:"Early avg",earlyPos:"Position at S1F",finishPos:"Finish",
   styleNote:"Each line is one run: the left dot is the early (S1F) position, the right dot the finish, both scaled 0 (lead) to 100 (rear) within the field.",loadedPace:n=>`Loaded ${n} sectional rows.`,
   others2:"2nd or worse",
   gateColors:"colour = gate",ring:"ring",
@@ -856,11 +857,13 @@ const STYLE_ORDER=["front","stalk","mid","closer","none"];
 function renderField(field){
   const t=T[lang], r=races[sel], body=$("tabbody");
   const maxW=Math.max(...field.map(h=>h.wgt)), minW=Math.min(...field.map(h=>h.wgt));
-  const stOf=h=>{const st=styleOf(h.hrnm); return {k:st?st.k:"none",n:st?st.n:0};};
+  const stOf=h=>{const st=styleOf(h.hrnm); if(!st) return {k:"none",n:0,tip:""};
+    const tip=lang==="ko"?`최근 ${st.n}전 · S1F 평균 ${st.s1fAvg.toFixed(1)}위${st.turnAvg!=null?` · 4C 평균 ${st.turnAvg.toFixed(1)}위`:""} · 착순 평균 ${st.finAvg.toFixed(1)}`:`last ${st.n} · S1F avg ${st.s1fAvg.toFixed(1)}${st.turnAvg!=null?` · 4C avg ${st.turnAvg.toFixed(1)}`:""} · finish avg ${st.finAvg.toFixed(1)}`;
+    return {k:st.k,n:st.n,tip};};
   const rowOf=h=>{const rt=ratingOf(h); const w=(h.wgt-minW)/((maxW-minW)||1); const st=stOf(h);
    return `<tr tabindex="0" data-n="${h.no}" aria-selected="${rsel===h.no}">
     <td class="n">${saddle(h.no)}</td>
-    <td><span class="stchip s-${st.k}" ${st.n?tipAttr(t.styleBasis(st.n)):""}>${t.styles[st.k]}</span></td>
+    <td><span class="stchip s-${st.k}" ${st.n?tipAttr(st.tip):""}>${t.styles[st.k]}</span>${st.n?`<div class="sub2 stsub">${esc(st.tip.replace(/^[^·]*· /,""))}</div>`:""}</td>
     <td class="hn">${chipBtn("horse",h.hrnm)}${(()=>{const x=finishOf(h);return x?` <span class="place p${x<=3?x:0}" title="${t.finished}">${x===99?"–":x}</span>`:"";})()}</td>
     <td><span class="sx">${esc(t.sexes[h.gndr]||h.gndr)}</span> ${esc(t.ageU(h.ag))}</td>
     <td class="n"><span class="rt"><i style="width:${8+w*32}px"></i>${h.wgt}</span></td>
@@ -876,8 +879,8 @@ function renderField(field){
     rows=STYLE_ORDER.map(k=>{const g=field.filter(h=>stOf(h).k===k); if(!g.length) return "";
       return `<tr class="grp s-${k}"><td colspan="${nCols}"><b>${t.styles[k]}</b> <span>${g.length}</span><small>${t.styleDesc[k]}</small></td></tr>`+g.map(rowOf).join("");}).join("");
   } else rows=field.map(rowOf).join("");
-  const toggle=`<div class="fmode" role="group"><button type="button" aria-pressed="${fieldMode==="style"}" data-m="style">${t.byStyle}</button><button type="button" aria-pressed="${fieldMode==="gate"}" data-m="gate">${t.byGate}</button></div>`;
-  body.innerHTML=`<div class="ehead"><p>${t.fieldNote(maxW,minW,String(r.cndtsBurdWgt).includes("핸디캡"))}</p>${toggle}</div>
+  const toggle=`<div class="fmode" role="group" ${tipAttr(t.styleHow)}><button type="button" aria-pressed="${fieldMode==="style"}" data-m="style">${t.byStyle}</button><button type="button" aria-pressed="${fieldMode==="gate"}" data-m="gate">${t.byGate}</button></div>`;
+  body.innerHTML=`<div class="ehead"><p>${t.fieldNote(maxW,minW,String(r.cndtsBurdWgt).includes("핸디캡"))}${fieldMode==="style"?` <span class="chnote">${t.styleHow}</span>`:""}</p>${toggle}</div>
    <div class="tbl"><table><thead><tr>${cols.map((c,i)=>`<th class="${[0,4,6,8,9].includes(i)?"n":""}">${c}</th>`).join("")}</tr></thead><tbody>${rows}</tbody></table></div>
    <div id="profile"></div>`;
   body.querySelectorAll(".fmode button").forEach(b=>b.onclick=()=>{fieldMode=b.dataset.m; renderField(field);});
@@ -1367,15 +1370,27 @@ function chartPace(rows,focus){
       ${r.ord?`<text x="${x(cks.length-1)+8}" y="${y(r.ord)+4}" class="ax ${me?"me":""}">${r.ord}${r.diff&&r.diff!=="-"?` <tspan class="dim">${esc(r.diff)}</tspan>`:""}${r.win?` <tspan class="dim">@${r.win}</tspan>`:""}</text>`:""}</g>`;});
   return svgOpen(W,H,"pace")+out+`</svg><div class="legend"><span><i class="sw win"></i>1st</span><span><i class="sw oth"></i>${t.others2}</span></div><p class="chnote">${t.paceNote}</p>`;
 }
+/* 초반 위치 = S1F(출발 직후)와 첫 코너(2C, 없으면 3C) 통과 순위의 평균. 두 지점을 같이 봐야 출발만 빠른 말과 실제로 앞에서 가는 말이 구분된다. */
+function earlyPos(p,f){ const a=(p.s1f-1)/Math.max(f-1,1); const c=p.c2>0?p.c2:(p.c3>0?p.c3:0); if(!c) return a; return (a+(c-1)/Math.max(f-1,1))/2; }
 function styleOf(name){ const ps=pace.filter(p=>p.hrnm===name&&p.s1f>0); if(!ps.length) return null;
   const fld=p=>paceFor(String(p.date).replace(/(\d{4})(\d{2})(\d{2})/,"$1/$2/$3"),p.no).length||10;
-  const early=sum(ps.map(p=>(p.s1f-1)/Math.max(fld(p)-1,1)))/ps.length; const fin=sum(ps.map(p=>((p.ord||fld(p))-1)/Math.max(fld(p)-1,1)))/ps.length;
-  const k=early<0.15?"front":early<0.4?"stalk":early<0.7?"mid":"closer"; return {k,early,fin,n:ps.length,runs:ps}; }
+  const early=sum(ps.map(p=>earlyPos(p,fld(p))))/ps.length; const fin=sum(ps.map(p=>((p.ord||fld(p))-1)/Math.max(fld(p)-1,1)))/ps.length;
+  // 4C(마지막 코너) 통과 순위: 직선 진입 시점의 위치. 없으면 3C.
+  const turnOf=p=>p.c4>0?p.c4:(p.c3>0?p.c3:0); const tp=ps.filter(p=>turnOf(p)>0);
+  const turn=tp.length?sum(tp.map(p=>(turnOf(p)-1)/Math.max(fld(p)-1,1)))/tp.length:null;
+  const avg=f=>sum(ps.map(f))/ps.length, s1fAvg=avg(p=>p.s1f), finAvg=avg(p=>p.ord||fld(p)), turnAvg=tp.length?sum(tp.map(turnOf))/tp.length:null;
+  // 분류: 초반(S1F·첫 코너)과 4C 위치를 함께 본다
+  let k; const m=turn==null?early:turn;
+  if(early<=0.2&&m<=0.35) k="front";            // 앞서 나가 코너까지 선두권 유지
+  else if(early<=0.45) k="stalk";               // 선두 바로 뒤
+  else if(early<=0.75||m<=0.5) k="mid";         // 중단, 또는 뒤에서 코너까지 중위권으로 전진
+  else k="closer";                              // 후미에서 직선 승부
+  return {k,early,turn,fin,s1fAvg,turnAvg,finAvg,n:ps.length,runs:ps}; }
 function chartStyle(st){
   const t=T[lang]; const W=520,H=70,L=70,R=70; const x=v=>L+v*(W-L-R);
   let out=`<line x1="${L}" x2="${W-R}" y1="30" y2="30" class="grid"/><text x="${L}" y="58" class="ax">${t.lead}</text><text x="${W-R}" y="58" class="ax" text-anchor="end">${t.back}</text>`;
-  st.runs.forEach(p=>{const f=paceFor(String(p.date).replace(/(\d{4})(\d{2})(\d{2})/,"$1/$2/$3"),p.no).length||10; const e=(p.s1f-1)/Math.max(f-1,1), o=((p.ord||f)-1)/Math.max(f-1,1);
-    out+=`<line x1="${x(e)}" x2="${x(o)}" y1="30" y2="30" class="styleln"/><circle cx="${x(e)}" cy="30" r="5" class="dot early" ${tipAttr(`${String(p.date).slice(4,6)}.${String(p.date).slice(6)} ${p.no}R · S1F ${p.s1f}/${f} → ${t.finish} ${p.ord}`)}/><circle cx="${x(o)}" cy="30" r="5" class="dot p${p.ord<=3?p.ord:0}"/>`;});
+  st.runs.forEach(p=>{const f=paceFor(String(p.date).replace(/(\d{4})(\d{2})(\d{2})/,"$1/$2/$3"),p.no).length||10; const e=earlyPos(p,f), o=((p.ord||f)-1)/Math.max(f-1,1); const c=p.c2>0?`2C ${p.c2}`:(p.c3>0?`3C ${p.c3}`:"");
+    out+=`<line x1="${x(e)}" x2="${x(o)}" y1="30" y2="30" class="styleln"/><circle cx="${x(e)}" cy="30" r="5" class="dot early" ${tipAttr(`${String(p.date).slice(4,6)}.${String(p.date).slice(6)} ${p.no}R · S1F ${p.s1f}${c?" · "+c:""} /${f} → ${t.finish} ${p.ord}`)}/><circle cx="${x(o)}" cy="30" r="5" class="dot p${p.ord<=3?p.ord:0}"/>`;});
   out+=`<text x="${x(st.early)}" y="16" class="val" text-anchor="middle">${t.earlyAvg} ${(st.early*100).toFixed(0)}</text>`;
   return svgOpen(W,H)+out+`</svg><div class="legend"><span><i class="sw early"></i>${t.earlyPos}</span><span><i class="sw p1"></i>${t.finishPos}</span></div>`;
 }
