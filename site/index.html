@@ -1094,7 +1094,9 @@ function drawerHorse(name){
   const tiles=statTiles([[t.career,`${rec[1]}-${rec[2]}-${rec[3]}`,lang==="ko"?`${rec[0]}전`:`${rec[0]} starts`],[t.winPct,`${pct(rec[1],rec[0])}%`,`${t.top3} ${pct(rec[1]+rec[2]+rec[3],rec[0])}%`],
     [t.p1y,t.man(h?h.e1y:0)],[t.pCareer,t.man(h?h.career:+(info?.amt||0))],...(info&&+info.avgWinDist?[[t.avgWin,`${info.avgWinDist}m`]]:[]),...(rs.length?[[t.lastRun,`${daysBetween(rs[0].date,cutDate())}${lang==="ko"?"일 전":" days ago"}`,rs[0].date.slice(5).replace("/",".")]]:[])]);
   const st=styleOf(name);
-  return head+`<section><h3>${t.chForm}</h3>${chartForm(rs)}</section>`+(st?`<section><h3>${t.styleTitle}: <span class="stylek">${t.styles[st.k]}</span> <small class="chnote">${st.n}${lang==="ko"?"전 기준":" runs"}</small></h3>${chartStyle(st)}<p class="chnote">${t.styleNote}</p></section>`:"")+(field.length>1?`<section><h3>${t.chField}</h3>${chartField(h,field)}</section>`:"")+`<section><h3>${t.chStats}</h3>${tiles}</section>`+
+  return head+`<section><h3>${t.chForm}</h3>${chartForm(rs)}</section>`+(st?`<section><h3>${t.styleTitle}: <span class="stylek">${t.styles[st.k]}</span> <small class="chnote">${st.n}${lang==="ko"?"전 기준":" runs"}</small></h3>${chartStyle(st)}<p class="chnote">${t.styleNote}</p></section>`:"")+(field.length>1?`<section><h3>${t.chField}</h3>${chartField(h,field)}</section>`:"")+(()=>{const pf=paceFit(name); if(!pf.fast.n&&!pf.even.n&&!pf.slow.n) return "";
+      const cell=(k,lbl)=>`<div class="stat"><div class="k">${lbl}</div><div class="v">${pf[k].n?pf[k].avgFin.toFixed(1)+(lang==="ko"?"착":""):"–"}</div><div class="c">${pf[k].n?(lang==="ko"?`${pf[k].n}전 평균`:`avg of ${pf[k].n}`):(lang==="ko"?"기록 없음":"no runs")}</div></div>`;
+      return `<section><h3>${lang==="ko"?"초반 페이스별 성적":"Record by early pace"}</h3><div class="stats">${cell("fast",lang==="ko"?"빠른 페이스":"Fast pace")}${cell("even",lang==="ko"?"보통":"Even")}${cell("slow",lang==="ko"?"느린 페이스":"Slow pace")}</div><p class="chnote">${lang==="ko"?"페이스 판정: 그 경주 선두마의 첫 200m(S1F) 시간이 같은 거리 중앙값보다 0.3초 이상 빠르면 빠름, 느리면 느림.":"Pace is judged from the leader's first 200 m (S1F) in that race: 0.3 s or more under the median for the distance is fast, over is slow."}</p></section>`;})()+`<section><h3>${t.chStats}</h3>${tiles}</section>`+
     (info?`<section><h3>${t.pedigree}</h3><div class="ped"><div class="pk">${t.sire}</div><div>${esc(info.fhrNm)}</div><div class="pk">${t.dam}</div><div>${esc(info.mhrNm)} <span class="ps">(${t.damsire} ${esc(info.mhrFhrNm)})</span></div></div><p class="chnote">${t.born} ${fdate(info.birthDt)} · ${t.debut} ${fdate(info.fdebutDt)} · ${lang==="ko"?info.color:(COLOR[info.color]||info.color)}</p></section>`:"");
 }
 
@@ -1334,6 +1336,15 @@ function buildStory(field,race){
       p3+=ko?`초반 200m가 가장 빠른 말은 ${top.map(x=>`${chipBtn("horse",x.h.hrnm)} ${x.s.s1fT.toFixed(1)}초(거리 평균 대비 ${rel(x)})`).join(", ")}입니다${tie&&both?" — 둘의 초반 스피드가 비슷해 선두 다툼이 빨라질 수 있습니다":""}. `
             :`Fastest first 200 m: ${top.map(x=>`${chipBtn("horse",x.h.hrnm)} ${x.s.s1fT.toFixed(1)}s (${rel(x)} vs distance avg)`).join(", ")}${tie&&both?" — near-identical early speed, so the lead could be contested hard":""}. `;
     }
+    // 예상 페이스와 그 흐름에서 잘 달린 말
+    const fastDuel=sp.length>=2&&Math.abs(sp[0].s.s1fRel-sp[1].s.s1fRel)<=0.2&&sp.slice(0,2).every(x=>x.s.k==="front"||x.s.k==="stalk");
+    const exp=(lead.length>=2||fastDuel)?"fast":lead.length===0?"slow":"even";
+    const fits=field.map(h=>({h,f:paceFit(h.hrnm)[exp]})).filter(x=>x.f.n>0).sort((a,b)=>b.f.avgPctl-a.f.avgPctl||a.f.avgFin-b.f.avgFin).slice(0,3);
+    const paceName={fast:ko?"빠른":"fast",even:ko?"보통":"even",slow:ko?"느린":"slow"}[exp];
+    p3+=ko?`<br><b>예상 초반 페이스: ${paceName}.</b> `:`<br><b>Expected early pace: ${paceName}.</b> `;
+    if(fits.length) p3+=ko?`${paceName} 페이스 경주에서 성적이 좋았던 말: ${fits.map(x=>`${chipBtn("horse",x.h.hrnm)} (${x.f.n}전 평균 ${x.f.avgFin.toFixed(1)}착)`).join(", ")}. `
+                        :`Best records in ${paceName}-pace races: ${fits.map(x=>`${chipBtn("horse",x.h.hrnm)} (${x.f.n} run${x.f.n>1?"s":""}, avg finish ${x.f.avgFin.toFixed(1)})`).join(", ")}. `;
+    else p3+=ko?`이 페이스에서 뛴 기록이 있는 말이 없습니다. `:`No runner has a record in a race run at this pace. `;
     if(cl.length>=2){ const top=cl.slice(0,2);
       p3+=ko?`마지막 200m가 가장 빠른 말은 ${top.map(x=>`${chipBtn("horse",x.h.hrnm)} ${x.s.g1fT.toFixed(1)}초`).join(", ")}로, 초반이 빠르게 흐르면 이쪽이 유리합니다.`
             :`Fastest final 200 m: ${top.map(x=>`${chipBtn("horse",x.h.hrnm)} ${x.s.g1fT.toFixed(1)}s`).join(", ")} — they benefit if the early pace is strong.`;
@@ -1405,6 +1416,19 @@ function styleOf(name){ const ps=pace.filter(p=>p.hrnm===name&&p.s1f>0); if(!ps.
 let _s1fBase=null, _s1fBaseN=0;
 function s1fBase(dist){ if(_s1fBaseN!==pace.length){ _s1fBaseN=pace.length; _s1fBase=new Map(); const by=new Map(); pace.forEach(p=>{const t=p.raw&&p.raw.s1fT; if(!(t>0)) return; if(!by.has(p.dist)) by.set(p.dist,[]); by.get(p.dist).push(t);}); by.forEach((v,d)=>{v.sort((a,b)=>a-b); _s1fBase.set(d,v[Math.floor(v.length/2)]);}); }
   if(_s1fBase.has(dist)) return _s1fBase.get(dist); const all=[..._s1fBase.values()]; return all.length?sum(all)/all.length:17.8; }
+/* 경주의 초반 페이스: 그 경주 선두마의 S1F 시간이 거리 중앙값보다 0.3초 이상 빠르면 '빠름', 느리면 '느림' */
+let _rp=new Map(), _rpN=0;
+function racePace(date8,no){ if(_rpN!==pace.length){_rpN=pace.length;_rp=new Map();}
+  const k=`${date8}|${no}`; if(_rp.has(k)) return _rp.get(k);
+  const rows=pace.filter(p=>String(p.date)===String(date8)&&p.no==no&&p.raw&&p.raw.s1fT>0); let v=null;
+  if(rows.length>=3){ const lead=Math.min(...rows.map(p=>p.raw.s1fT)); const d=lead-s1fBase(rows[0].dist); v={d,kind:d<=-0.3?"fast":d>=0.3?"slow":"even"}; }
+  _rp.set(k,v); return v; }
+function paceFit(name){
+  const out={fast:[],even:[],slow:[]};
+  pace.filter(p=>p.hrnm===name&&p.ord>0).forEach(p=>{const rp=racePace(p.date,p.no); if(!rp) return; const f=paceFor(String(p.date).replace(/(\d{4})(\d{2})(\d{2})/,"$1/$2/$3"),p.no).length||10; out[rp.kind].push({ord:p.ord,pctl:1-(p.ord-1)/Math.max(f-1,1)});});
+  const agg=a=>a.length?{n:a.length,avgFin:sum(a.map(x=>x.ord))/a.length,avgPctl:sum(a.map(x=>x.pctl))/a.length}:{n:0};
+  return {fast:agg(out.fast),even:agg(out.even),slow:agg(out.slow)};
+}
 function chartStyle(st){
   const t=T[lang]; const W=520,H=70,L=70,R=70; const x=v=>L+v*(W-L-R);
   let out=`<line x1="${L}" x2="${W-R}" y1="30" y2="30" class="grid"/><text x="${L}" y="58" class="ax">${t.lead}</text><text x="${W-R}" y="58" class="ax" text-anchor="end">${t.back}</text>`;
