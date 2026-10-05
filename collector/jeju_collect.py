@@ -18,6 +18,11 @@
     # 마필종합정보 조회를 건너뛰기 (트래픽 절약)
     python3 jeju_collect.py 20240817 --no-horses
 
+    # 경주일 중 빠른 갱신: 결과·구간 기록만 받아 기존 묶음 파일에 합칩니다 (1분 안쪽)
+    #   --merge-into 로 지정한 파일에 출전표·마필·기수 정보는 그대로 두고 결과/구간만 갱신.
+    #   --only-race-days 를 붙이면 출전표에 오늘 경주가 없을 때 아무것도 하지 않고 종료 코드 3으로 끝납니다.
+    python3 jeju_collect.py 20240817 --results-only --merge-into site/latest.json --out site/latest.json --only-race-days
+
 필요한 것: Python 3.8 이상. 추가 설치 없음.
 """
 import argparse
@@ -119,7 +124,13 @@ def main():
     ap.add_argument("--no-horses", action="store_true", help="마필종합정보 조회 생략")
     ap.add_argument("--key", default=os.environ.get("JEJU_API_KEY"), help="인증키 (기본: 환경변수 JEJU_API_KEY)")
     ap.add_argument("--out", help="저장할 파일 이름")
+    ap.add_argument("--results-only", action="store_true", help="경주성적·구간 기록만 받기 (빠른 갱신)")
+    ap.add_argument("--merge-into", help="기존 묶음 파일: 여기에 결과·구간을 합쳐서 저장")
+    ap.add_argument("--only-race-days", action="store_true", help="오늘(경주일자)에 경주가 없으면 아무것도 하지 않음 (종료 코드 3)")
     a = ap.parse_args()
+
+    if a.results_only:
+        return quick_results(a)
 
     if not a.key:
         sys.exit("인증키가 없습니다. export JEJU_API_KEY=\"...\" 로 설정하거나 --key 를 쓰세요.")
@@ -194,6 +205,63 @@ def main():
         for e in dict.fromkeys(errors):
             print("  -", e)
     print("레이스카드 페이지 아래 '파일 불러오기'로 이 파일을 열면 됩니다.")
+
+
+def quick_results(a):
+    """경주일 중 빠른 갱신: 경주성적 최근 몇 페이지 + 당일 구간 기록만 받아 기존 묶음에 병합."""
+    base = {}
+    if a.merge_into and os.path.exists(a.merge_into):
+        with open(a.merge_into, encoding="utf-8") as f:
+            base = json.load(f)
+    if a.only_race_days:
+        sheet = base.get("sheet") or []
+        if not any(str(r.get("rcDate", "")).replace("/", "") == a.race_dt for r in sheet):
+            print(f"{a.race_dt}: 출전표에 경주가 없어 건너뜁니다.")
+            sys.exit(3)
+
+    errors = []
+    print("· 경주성적 (최근) ...", end=" ", flush=True)
+    try:
+        new_res = fetch_all(a.key, "results", {}, max_pages=min(a.result_pages, 5))
+        print(f"{len(new_res)}건")
+    except ApiError as e:
+        print("실패"); errors.append(str(e)); new_res = []
+    key = lambda r: f"{str(r.get('rcDate','')).replace('/','')}|{r.get('gbn','')}|{r.get('rcNo','')}|{r.get('hrNo') or r.get('hrName')}"
+    merged = {key(r): r for r in (base.get("results") or [])}
+    before = len(merged)
+    for r in new_res:
+        merged[key(r)] = r
+    results = sorted(merged.values(), key=lambda r: (str(r.get("rcDate", "")), int(r.get("rcNo") or 0)), reverse=True)
+    added = len(merged) - before
+
+    # 구간 기록: 오늘 + 새 결과에 나온 날짜 중 아직 구간 기록이 없는 날
+    have = {str(p.get("rcDate", "")) for p in (base.get("pace") or [])}
+    want = {a.race_dt} | {str(r.get("rcDate", "")).replace("/", "") for r in new_res if r.get("gbn") == "R"}
+    pace = [p for p in (base.get("pace") or []) if str(p.get("rcDate", "")) != a.race_dt]  # 오늘 것은 새로 받음
+    got = 0
+    for d8 in sorted(want):
+        if d8 != a.race_dt and d8 in have:
+            continue
+        try:
+            rows = fetch_all(a.key, "pace", {"meet": MEET_JEJU, "rc_date": d8}, max_pages=2)
+            pace.extend(rows); got += len(rows)
+        except ApiError as e:
+            errors.append(str(e)); break
+    print(f"· 구간 기록 ... {got}건 (오늘 {a.race_dt} 포함)")
+
+    bundle = dict(base) if base else {"bundle": 1, "sheet": [], "races": [], "reg": [], "runs": [], "jockeys": [], "trainers": [], "horses": []}
+    bundle.update({"bundle": 1, "race_dt": base.get("race_dt", a.race_dt), "collected": time.strftime("%Y-%m-%d %H:%M"),
+                   "results": results, "pace": pace, "live": {"date": a.race_dt, "at": time.strftime("%Y-%m-%d %H:%M")}})
+    out = a.out or a.merge_into or f"jeju_bundle_{a.race_dt}.json"
+    with open(out, "w", encoding="utf-8") as f:
+        json.dump(bundle, f, ensure_ascii=False)
+    print(f"\n저장: {out} (결과 {len(results)}건, 새로 {added}건 · 구간 {len(pace)}건)")
+    if errors:
+        print("\n확인이 필요한 오류:")
+        for e in dict.fromkeys(errors):
+            print("  -", e)
+    if not new_res and not got:
+        sys.exit(2)
 
 
 if __name__ == "__main__":
