@@ -858,7 +858,7 @@ function renderField(field){
   const t=T[lang], r=races[sel], body=$("tabbody");
   const maxW=Math.max(...field.map(h=>h.wgt)), minW=Math.min(...field.map(h=>h.wgt));
   const stOf=h=>{const st=styleOf(h.hrnm); if(!st) return {k:"none",n:0,tip:""};
-    const tip=lang==="ko"?`최근 ${st.n}전 · S1F 평균 ${st.s1fAvg.toFixed(1)}위${st.turnAvg!=null?` · 4C 평균 ${st.turnAvg.toFixed(1)}위`:""} · 착순 평균 ${st.finAvg.toFixed(1)}`:`last ${st.n} · S1F avg ${st.s1fAvg.toFixed(1)}${st.turnAvg!=null?` · 4C avg ${st.turnAvg.toFixed(1)}`:""} · finish avg ${st.finAvg.toFixed(1)}`;
+    const tip=lang==="ko"?`최근 ${st.n}전 · S1F 평균 ${st.s1fAvg.toFixed(1)}위${st.s1fT!=null?`(${st.s1fT.toFixed(1)}초)`:""}${st.turnAvg!=null?` · 4C 평균 ${st.turnAvg.toFixed(1)}위`:""} · 착순 평균 ${st.finAvg.toFixed(1)}${st.g1fT!=null?` · G1F ${st.g1fT.toFixed(1)}초`:""}`:`last ${st.n} · S1F avg ${st.s1fAvg.toFixed(1)}${st.s1fT!=null?` (${st.s1fT.toFixed(1)}s)`:""}${st.turnAvg!=null?` · 4C avg ${st.turnAvg.toFixed(1)}`:""} · finish avg ${st.finAvg.toFixed(1)}${st.g1fT!=null?` · G1F ${st.g1fT.toFixed(1)}s`:""}`;
     return {k:st.k,n:st.n,tip};};
   const rowOf=h=>{const rt=ratingOf(h); const w=(h.wgt-minW)/((maxW-minW)||1); const st=stOf(h);
    return `<tr tabindex="0" data-n="${h.no}" aria-selected="${rsel===h.no}">
@@ -1325,7 +1325,19 @@ function buildStory(field,race){
       :(ko?"뚜렷한 선행형이 없어 초반이 느리게 흐를 수 있고, 앞에서 편하게 가는 말이 유리해질 수 있습니다. ":"There is no obvious front-runner, so the early pace could be slow and favour horses sitting close to it. ");
     if(clo.length&&lead.length) p3+=ko?`추입형으로는 ${nm(clo)}가 있습니다. `:`Closers include ${nm(clo)}. `;
     p3+=ko?`(구간 기록 ${cover}/${n}두 기준) `:`(based on sectional records for ${cover} of ${n} runners) `;
-    if(race.raceDs<=1000) p3+=ko?`${race.raceDs}m 단거리라 출발과 초반 위치가 중요합니다.`:`At ${race.raceDs} m this is a sprint, so the start and early position matter.`;
+    if(race.raceDs<=1000) p3+=ko?`${race.raceDs}m 단거리라 출발과 초반 위치가 중요합니다. `:`At ${race.raceDs} m this is a sprint, so the start and early position matter. `;
+    // 구간 시간: 초반 200m(S1F)와 마지막 200m(G1F)
+    const sp=st.filter(x=>x.s.s1fT!=null).sort((a,b)=>a.s.s1fRel-b.s.s1fRel), cl=st.filter(x=>x.s.g1fT!=null).sort((a,b)=>a.s.g1fT-b.s.g1fT);
+    if(sp.length>=2){
+      const top=sp.slice(0,2), tie=Math.abs(top[0].s.s1fRel-top[1].s.s1fRel)<=0.2, both=top.every(x=>x.s.k==="front"||x.s.k==="stalk");
+      const rel=x=>`${x.s.s1fRel<=0?"−":"+"}${Math.abs(x.s.s1fRel).toFixed(1)}`;
+      p3+=ko?`초반 200m가 가장 빠른 말은 ${top.map(x=>`${chipBtn("horse",x.h.hrnm)} ${x.s.s1fT.toFixed(1)}초(거리 평균 대비 ${rel(x)})`).join(", ")}입니다${tie&&both?" — 둘의 초반 스피드가 비슷해 선두 다툼이 빨라질 수 있습니다":""}. `
+            :`Fastest first 200 m: ${top.map(x=>`${chipBtn("horse",x.h.hrnm)} ${x.s.s1fT.toFixed(1)}s (${rel(x)} vs distance avg)`).join(", ")}${tie&&both?" — near-identical early speed, so the lead could be contested hard":""}. `;
+    }
+    if(cl.length>=2){ const top=cl.slice(0,2);
+      p3+=ko?`마지막 200m가 가장 빠른 말은 ${top.map(x=>`${chipBtn("horse",x.h.hrnm)} ${x.s.g1fT.toFixed(1)}초`).join(", ")}로, 초반이 빠르게 흐르면 이쪽이 유리합니다.`
+            :`Fastest final 200 m: ${top.map(x=>`${chipBtn("horse",x.h.hrnm)} ${x.s.g1fT.toFixed(1)}s`).join(", ")} — they benefit if the early pace is strong.`;
+    }
   }
   /* 4. 주의할 점 */
   const w=[];
@@ -1385,7 +1397,14 @@ function styleOf(name){ const ps=pace.filter(p=>p.hrnm===name&&p.s1f>0); if(!ps.
   else if(early<=0.45) k="stalk";               // 선두 바로 뒤
   else if(early<=0.75||m<=0.5) k="mid";         // 중단, 또는 뒤에서 코너까지 중위권으로 전진
   else k="closer";                              // 후미에서 직선 승부
-  return {k,early,turn,fin,s1fAvg,turnAvg,finAvg,n:ps.length,runs:ps}; }
+  const tS=ps.filter(p=>p.raw&&p.raw.s1fT>0), tG=ps.filter(p=>p.raw&&p.raw.g1fT>0);
+  const s1fT=tS.length?sum(tS.map(p=>p.raw.s1fT))/tS.length:null, g1fT=tG.length?sum(tG.map(p=>p.raw.g1fT))/tG.length:null;
+  const s1fRel=tS.length?sum(tS.map(p=>p.raw.s1fT-s1fBase(p.dist)))/tS.length:null;  // 거리별 중앙값 대비 (음수=빠름)
+  return {k,early,turn,fin,s1fAvg,turnAvg,finAvg,s1fT,g1fT,s1fRel,n:ps.length,runs:ps}; }
+/* 거리별 S1F 시간 중앙값: 거리마다 첫 200m 통과 시간이 달라서 그 차이를 뺀 뒤 비교한다 */
+let _s1fBase=null, _s1fBaseN=0;
+function s1fBase(dist){ if(_s1fBaseN!==pace.length){ _s1fBaseN=pace.length; _s1fBase=new Map(); const by=new Map(); pace.forEach(p=>{const t=p.raw&&p.raw.s1fT; if(!(t>0)) return; if(!by.has(p.dist)) by.set(p.dist,[]); by.get(p.dist).push(t);}); by.forEach((v,d)=>{v.sort((a,b)=>a-b); _s1fBase.set(d,v[Math.floor(v.length/2)]);}); }
+  if(_s1fBase.has(dist)) return _s1fBase.get(dist); const all=[..._s1fBase.values()]; return all.length?sum(all)/all.length:17.8; }
 function chartStyle(st){
   const t=T[lang]; const W=520,H=70,L=70,R=70; const x=v=>L+v*(W-L-R);
   let out=`<line x1="${L}" x2="${W-R}" y1="30" y2="30" class="grid"/><text x="${L}" y="58" class="ax">${t.lead}</text><text x="${W-R}" y="58" class="ax" text-anchor="end">${t.back}</text>`;
@@ -1457,7 +1476,7 @@ const ING={
   jockeys:it=>it.forEach(a=>jks.set(a.jkName,{n:+a.rcCntT,w:+a.ord1CntT,s:+a.ord2CntT,t:+a.ord3CntT,wr:+a.winRateTsum,qr:+a.quRateTsum})),
   trainers:it=>it.forEach(a=>trs.set(a.trName,{n:+a.rcCntT,w:+a.ord1CntT,s:+a.ord2CntT,t:+a.ord3CntT,wr:+a.winRateTsum,qr:+a.quRateTsum})),
   horses:it=>addInfo(it),
-  pace:it=>{const add=it.map(r=>toPace([r.rcDate,r.rcNo,r.hrName,r.hrNo,r.chulNo,r.ord,r.sjS1fOrd,r.sj_2cOrd,r.sj_3cOrd,r.sj_4cOrd,r.sjG1fOrd,r.rcTime,r.winOdds,r.plcOdds,String(r.diffUnit),r.wgHr,r.rcDist,{wgHr:r.wgHr,wgBudam:r.wgBudam,jkName:r.jkName,rank:r.rank,rcName:r.rcName,budam:r.budam,track:r.track,rating:r.rating,rcDist:r.rcDist}])); const keys=new Set(add.map(p=>`${p.date}|${p.no}`)); pace=pace.filter(p=>!keys.has(`${p.date}|${p.no}`)).concat(add);},
+  pace:it=>{const add=it.map(r=>toPace([r.rcDate,r.rcNo,r.hrName,r.hrNo,r.chulNo,r.ord,r.sjS1fOrd,r.sj_2cOrd,r.sj_3cOrd,r.sj_4cOrd,r.sjG1fOrd,r.rcTime,r.winOdds,r.plcOdds,String(r.diffUnit),r.wgHr,r.rcDist,{wgHr:r.wgHr,wgBudam:r.wgBudam,jkName:r.jkName,rank:r.rank,rcName:r.rcName,budam:r.budam,track:r.track,rating:r.rating,rcDist:r.rcDist,s1fT:+r.jeS1fTime||0,g1fT:+r.jeG1fTime||0,c4T:+r.je_4cTime||0}])); const keys=new Set(add.map(p=>`${p.date}|${p.no}`)); pace=pace.filter(p=>!keys.has(`${p.date}|${p.no}`)).concat(add);},
   sheet:it=>{const ds=sheetToDays(it); ds.forEach(putDay); useDay(pickDefaultDay());}
 };
 function kindOf(it){ const a=it[0]||{}; if("sjS1fOrd" in a) return "pace"; if("chulNo" in a&&"hrNameEn" in a) return "sheet";
