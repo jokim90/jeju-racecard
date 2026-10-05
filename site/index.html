@@ -296,7 +296,8 @@ ol.order li.me{font-weight:700}
 .noent{font-size:14px;color:var(--muted);margin:0}
 @media (prefers-reduced-motion:no-preference){.track .run,.bar i{transition:width .5s ease}}
 .tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
-.story{display:grid;gap:20px;max-width:72ch;padding-top:14px}
+.story{display:grid;gap:20px;padding-top:14px}
+.story>div>p,.story>div>ul,.story>p,.story details{max-width:72ch}
 .story h4{margin:0 0 6px;font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:var(--sea)}
 .story p,.story li{margin:0;font-size:15px;line-height:1.7}
 .story ul{margin:0;padding:0;list-style:none;display:grid;gap:10px}
@@ -414,6 +415,10 @@ tr.grp td span{font-family:var(--mono);color:var(--muted);margin-left:4px}
 tr.grp td small{display:block;font-weight:400;color:var(--muted);font-size:12px}
 tr.grp.s-front td{border-left-color:#d3262b}tr.grp.s-stalk td{border-left-color:var(--tangerine)}tr.grp.s-mid td{border-left-color:var(--sea)}tr.grp.s-closer td{border-left-color:var(--navy)}
 .stsub{font-family:var(--mono);font-size:10.5px;white-space:nowrap}
+.pred{margin-top:12px;border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--surface)}
+.predhead{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:baseline;margin-bottom:6px}
+.story .pred{max-width:none}
+.pred .pacetrack>.chnote{display:none}
 </style>
 
 <nav class="topnav" aria-label="Main">
@@ -1362,15 +1367,28 @@ function buildStory(field,race){
                  :`The model's top three are ${top.map(x=>`#${x.h.no}`).join(", ")}. It only sees a limited window of recent results, so use it alongside the ${glBtn("card","race card")} rather than on its own.`;
   return `<div class="story"><div><h4>${H[0]}</h4><p>${p1}</p></div>
     <div><h4>${H[1]}</h4><ul>${li}</ul><p style="margin-top:8px">${p2}</p><p class="chnote" style="margin-top:6px">${wline}</p><details class="why"><summary>${T[lang].whyTitle}</summary><div class="whybody">${T[lang].whyBody}</div></details></div>
-    <div><h4>${H[2]}</h4><p>${p3}</p></div>
+    <div><h4>${H[2]}</h4><p>${p3}</p>
+      ${field.length>=2?`<div class="pred"><div class="predhead"><b>${ko?"전개 예측 모델":"Prediction model"}</b><span class="chnote">${ko?"지점을 누르거나 재생으로 예상 순서를 봅니다":"Tap a call or press play to step through the predicted order"}</span></div><div class="pacetrack"></div>
+      <p class="chnote">${ko?`예측 방식: S1F는 각 말의 최근 초반 위치(S1F·첫 코너 평균), 4C는 최근 4C 통과 위치, 결승은 모델 승률 순서입니다. 그 사이 지점은 둘을 섞어 계산합니다. 구간 기록이 없는 말은 중위권으로 둡니다. 빨간 점(노란 테두리)은 모델 1순위. 간격은 순서일 뿐 실제 거리가 아닙니다.`:`How it is built: S1F uses each horse's recent early position (S1F and first-corner average), 4C its recent 4C position, and the finish is the model's win-probability order; calls in between blend the two. Horses with no sectionals are placed midfield. The red dot with a yellow ring is the model's top pick. Spacing shows order only, not real distance.`}</p></div>`:""}</div>
     <div><h4>${H[3]}</h4>${w.length?`<ul class="wl">${w.map(x=>`<li><span>•</span><span>${x}</span></li>`).join("")}</ul>`:`<p>${ko?"눈에 띄는 주의 사항은 없습니다.":"Nothing stands out."}</p>`}</div>
     <div><h4>${H[4]}</h4><p>${bottom}</p></div>
     <p class="chnote">${ko?"이 글은 경주 데이터와 시행계획에서 자동으로 만들어집니다. 밑줄 친 용어를 누르면 설명이 열립니다.":"Generated automatically from the race data and the Racing Plan. Tap an underlined term for an explanation."}</p></div>`;
+}
+/* 전개 예측: 주행 스타일(초반·4C 위치)과 모델 승률로 각 지점의 예상 순서를 만든다 */
+function predictRows(field,race){
+  const rk=rankField(field,race); const maxP=Math.max(...rk.map(x=>x.prob)), minP=Math.min(...rk.map(x=>x.prob));
+  const has2C=race.raceDs>TRK.seg.a+TRK.seg.right+TRK.seg.top;
+  const rows=rk.map(x=>{const st=styleOf(x.h.hrnm); const early=st?st.early:0.55, turn=st&&st.turn!=null?st.turn:early; const pn=maxP>minP?(x.prob-minP)/(maxP-minP):0.5;
+    return {gate:x.h.no,hrnm:x.h.hrnm,hrNo:x.h.hrNo,prob:x.prob,known:!!st,_s1f:early,_c2:early*0.75+turn*0.25,_c3:early*0.5+turn*0.5,_c4:turn,_g1f:turn*0.45+(1-pn)*0.55,_fin:1-pn};});
+  const rank=(k,out)=>{rows.slice().sort((a,b)=>a[k]-b[k]||b.prob-a.prob).forEach((r,i)=>r[out]=i+1);};
+  rank("_s1f","s1f"); if(has2C) rank("_c2","c2"); rank("_c3","c3"); rank("_c4","c4"); rank("_g1f","g1f"); rank("_fin","ord");
+  return rows;
 }
 function renderStory(field){
   const body=$("tabbody"), r=races[sel];
   body.innerHTML=buildStory(field,r);
   body.querySelectorAll(".gl").forEach(b=>b.onclick=()=>openPrimer(GLKEY[b.dataset.g]||b.dataset.g));
+  const pr=body.querySelector(".pacetrack"); if(pr){ const rows=predictRows(field,r); paceStep=0; clearInterval(paceTimer); paceTimer=null; pr.innerHTML=chartTrack(rows,r.raceDs,null); bindTrack(body,rows,r.raceDs,null); }
 }
 
 /* ---- 전개(구간 통과 순위) ---- */
