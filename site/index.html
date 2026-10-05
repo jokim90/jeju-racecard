@@ -386,6 +386,10 @@ html[lang="ko"] .navtabs a{font-size:15px}
 .p101 .pcard .pb{margin:0}
 .p101 .gloss{margin-top:28px;display:grid;gap:12px}
 .p101 .gloss h2{font-family:var(--display);font-weight:400;font-size:22px;margin:0}
+.sortnote{margin:0 0 8px;font-family:var(--mono);font-size:12px;color:var(--sea)}
+.ranktbl th button small{display:block;font-weight:400;color:var(--muted);font-size:10px}
+.ranktbl td.sortcol{background:color-mix(in srgb,var(--sea) 8%,transparent)}
+.ranktbl .fv small{color:var(--muted);font-size:11px}
 </style>
 
 <nav class="topnav" aria-label="Main">
@@ -497,8 +501,8 @@ const T = {
   vetNA:"출전표 API에는 진료·장구 기록이 없습니다. 경주 당일 출전마 API(API315)를 불러오면 표시됩니다.",
   loadedSheet:(n,d)=>`출전표 ${n}두를 불러왔습니다 (${d}).`,loadedSheetN:n=>`출전표 ${n}두를 불러왔습니다.`,
   rankTab:"예측 순위",modelP:"모델 승률",fnames:{dist:"거리 적성",form:"최근 폼",hwin:"말 승률",jock:"기수 승률",trn:"조교사 승률",ratg:"레이팅"},
-  rankNote:"여섯 가지 요소를 경주 안에서 상대 비교해 합산한 순위입니다. 요소 버튼을 끄고 켜면 다시 계산되고, 열 제목을 누르면 그 요소만으로 정렬합니다. 마번은 출전표 그대로입니다. 단순 참고용 모델이며 실제 배당이나 경주 전개는 반영하지 않습니다.",
-  rankLegend:"거리 적성: 오늘 거리 ±100m 경주의 평균 착순 백분위(없으면 평균 우승거리로 추정, ~ 표시). 최근 폼: 최근 5전 착순 백분위, 최근 경주에 가중. 말 승률: 통산 1착과 입상에 출전 수 보정. 기수·조교사: 제주 통산 승률(출전 수 적으면 평균 쪽으로 보정). 데이터가 없는 요소는 중간값으로 둡니다.",
+  rankNote:"열 제목을 누르면 그 항목의 실제 값으로 순위를 다시 매깁니다. '모델 승률'은 여섯 항목을 가중 합산한 종합 순위(스토리의 선정과 같음)입니다. 마번은 출전표 그대로입니다. 참고용 모델이며 실제 배당이나 경주 전개는 반영하지 않습니다.",sortModel:"정렬: 모델 종합 (거리 15% · 폼 25% · 말 승률 15% · 기수 15% · 조교사 10% · 레이팅 20%)",sortBy:n=>`정렬: ${n} (실제 값 기준)`,
+  rankLegend:"표의 값은 실제 값입니다. 거리 적성: 오늘 거리 ±100m 경주의 평균 착순(낮을수록 좋음, 기록 없으면 '추정'). 최근 폼: 최근 5전 평균 착순과 착순 나열(최신 순). 말 승률: 통산 1착 비율. 기수·조교사: 제주 통산 승률. 레이팅: KRA 레이팅. 종합 모델 승률은 이 값들을 경주 안에서 상대 비교해 가중 합산합니다(표본이 적으면 평균 쪽으로 보정).",
   whyTitle:"왜 경주 안에서 상대 비교로 계산하나요?",
   whyBody:`<p><b>승률은 그 경주 안에서만 의미가 있기 때문입니다.</b> 레이팅 60인 말은 제5등급에서는 압도적이지만 제1등급에서는 꼴찌 후보입니다. 그래서 요소마다 절대값 대신 "이 경주 출전마 중 어디쯤인가"로 바꾼 뒤, 합계를 경주 전체가 100%가 되는 승률로 만듭니다. 승자는 한 마리이므로 합이 100%인 형태가 배당과도 같은 구조입니다.</p>
 <p><b>요소들의 단위가 제각각이라 그대로 더할 수 없기 때문입니다.</b> 레이팅은 0~120점, 상금은 수천만 원, 기수 승률은 5~18%, 폼은 착순 백분위입니다. 각각을 경주 안에서 0~1로 맞춰야 "레이팅 20% + 폼 25%" 같은 가중치가 뜻대로 작동합니다.</p>
@@ -571,8 +575,8 @@ const T = {
   vetNA:"The entry sheet API has no vet or gear records. Load the runner API (API315) on race day to see them.",
   loadedSheet:(n,d)=>`Loaded ${n} runners from the entry sheet (${d}).`,loadedSheetN:n=>`Loaded ${n} runners from the entry sheet.`,
   rankTab:"Model rank",modelP:"Model win %",fnames:{dist:"Distance fit",form:"Recent form",hwin:"Horse win %",jock:"Jockey win %",trn:"Trainer win %",ratg:"Rating"},
-  rankNote:"Runners ranked by six factors compared within this race and combined. Toggle factors to recalculate; tap a column header to sort by that factor alone. Gate numbers stay as on the entry sheet. A simple reference model: it ignores the market and how the race will be run.",
-  rankLegend:"Distance fit: average finishing percentile in races within ±100m of today's trip (estimated from average winning distance when none, marked ~). Recent form: last 5 finishes as percentiles, weighted to the latest. Horse win %: career wins and places, shrunk for few starts. Jockey/trainer: Jeju career win rate, shrunk toward the average for small samples. Missing factors are set to the midpoint.",
+  rankNote:"Tap a column header to re-rank the field by that factor's actual value. 'Model win %' is the combined weighted ranking (the same selection shown in the Story). Gate numbers stay as on the entry sheet. A reference model only: it ignores the market and how the race will be run.",sortModel:"Sorted by: combined model (distance 15% · form 25% · horse win 15% · jockey 15% · trainer 10% · rating 20%)",sortBy:n=>`Sorted by: ${n} (actual values)`,
+  rankLegend:"Table shows actual values. Distance fit: average finish in races within ±100m of today's trip (lower is better; 'est.' when none on file). Recent form: average finish over the last 5 and the finishes themselves (latest first). Horse win %: career wins ÷ starts. Jockey/trainer: Jeju career win rate. Rating: KRA rating. The combined model win % compares these within the race and weights them (shrunk toward the average for small samples).",
   whyTitle:"Why are percentages calculated relative to the field?",
   whyBody:`<p><b>Because a win chance only means something within one race.</b> A horse rated 60 dominates Class 5 and is a backmarker in Class 1. So each factor is converted from its raw value to "where does this horse sit among today's runners", and the total becomes a win % that sums to 100 across the race. One horse wins, so a field that sums to 100% is the same shape as a betting market.</p>
 <p><b>Because the factors are in different units and cannot simply be added.</b> Rating runs 0–120, earnings are in millions of won, jockey strike rates sit between 5 and 18%, form is a finishing percentile. Scaling each to 0–1 within the race is what makes a weighting like "rating 20% + form 25%" behave as intended.</p>
@@ -1073,7 +1077,7 @@ document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest
 
 /* ---- 예측 순위 ---- */
 const FACTORS=[["dist",0.15],["form",0.25],["hwin",0.15],["jock",0.15],["trn",0.10],["ratg",0.20]];
-let factorOn=new Set(FACTORS.map(f=>f[0])), rankSort="model";
+let rankSort="model";
 const pctl=r=>{const p=pos(r.chak), f=parseInt(String(r.chak).split("/")[1])||10; return p===99?0:1-(p-1)/Math.max(f-1,1);};
 function rawFactors(h,race){
   const rs=recentFor(h.hrnm).filter(x=>x.gbn==="R"), info=infoFor(h.hrNo,h.hrnm);
@@ -1089,35 +1093,55 @@ function rawFactors(h,race){
   const rt=ratingOf(h); const ratg=(rt==null||rt===0)?null:rt;
   return {dist,distN,form,formN:last.length,hwin,jock,trn,ratg};
 }
+/* 항목별 절대값: 표에 보여 주고 정렬에 쓴다. v=값, lo=true면 낮을수록 좋음(평균 착순), n=표본 수 */
+function absFactors(x){
+  const h=x.h, rs=runHist(h.hrnm), race=races[sel];
+  const near=rs.filter(r=>Math.abs(r.dist-race.raceDs)<=100), np=near.map(r=>pos(r.chak)).filter(p=>p!==99);
+  const last=rs.slice(0,5), lp=last.map(r=>pos(r.chak)).filter(p=>p!==99);
+  const j=jks.get(h.jck), tr=trs.get(h.trar);
+  return {
+    dist:{v:np.length?sum(np)/np.length:null,n:near.length,lo:true,est:(!np.length&&x.f.dist!=null)},
+    form:{v:lp.length?sum(lp)/lp.length:null,n:last.length,lo:true,seq:last.map(r=>pos(r.chak))},
+    hwin:{v:h.recAll[0]?h.recAll[1]/h.recAll[0]*100:null,n:h.recAll[0]},
+    jock:{v:j&&j.n?+j.wr:null,n:j?j.n:0},
+    trn:{v:tr&&tr.n?+tr.wr:null,n:tr?tr.n:0},
+    ratg:{v:x.f.ratg}
+  };
+}
 function rankField(field,race){
   const raw=field.map(h=>({h,f:rawFactors(h,race)}));
   const norm=k=>{const vals=raw.map(x=>x.f[k]).filter(v=>v!=null); if(!vals.length) return ()=>0.5; const mn=Math.min(...vals),mx=Math.max(...vals); return v=>v==null?0.5:mx>mn?(v-mn)/(mx-mn):0.5;};
   const fns=Object.fromEntries(FACTORS.map(([k])=>[k,norm(k)]));
-  const on=FACTORS.filter(([k])=>factorOn.has(k)), wsum=sum(on.map(f=>f[1]))||1;
-  raw.forEach(x=>{x.n=Object.fromEntries(FACTORS.map(([k])=>[k,fns[k](x.f[k])])); x.score=sum(on.map(([k,w])=>x.n[k]*w))/wsum;});
+  raw.forEach(x=>{x.n=Object.fromEntries(FACTORS.map(([k])=>[k,fns[k](x.f[k])])); x.score=sum(FACTORS.map(([k,w])=>x.n[k]*w)); x.a=absFactors(x);});
   const ex=raw.map(x=>Math.exp(4*x.score)), es=sum(ex); raw.forEach((x,i)=>x.prob=ex[i]/es*100);
   return raw;
 }
 function renderRank(field){
-  const t=T[lang], r=races[sel], body=$("tabbody"), rows=rankField(field,r);
-  rows.sort((a,b)=>rankSort==="model"?b.prob-a.prob:(b.n[rankSort]-a.n[rankSort])||(b.prob-a.prob));
+  const t=T[lang], r=races[sel], body=$("tabbody"), rows=rankField(field,r), ko=lang==="ko";
+  const key=rankSort;
+  if(key==="model") rows.sort((a,b)=>b.prob-a.prob);
+  else rows.sort((a,b)=>{const A=a.a[key],B=b.a[key]; if(A.v==null&&B.v==null) return b.prob-a.prob; if(A.v==null) return 1; if(B.v==null) return -1; return (A.lo?A.v-B.v:B.v-A.v)||(b.prob-a.prob);});
   const maxP=Math.max(...rows.map(x=>x.prob));
-  const fmt={dist:x=>x.f.dist==null?"–":x.f.distN?`${(x.f.dist*100).toFixed(0)}${lang==="ko"?" · "+x.f.distN+"전":" · "+x.f.distN+"r"}`:`~${(x.f.dist*100).toFixed(0)}`,
-    form:x=>x.f.form==null?"–":`${(x.f.form*100).toFixed(0)} · ${x.f.formN}${lang==="ko"?"전":"r"}`,
-    hwin:x=>`${pct(x.h.recAll[1],x.h.recAll[0])}% · ${x.h.recAll[0]}${lang==="ko"?"전":"r"}`,
-    jock:x=>{const j=jks.get(x.h.jck);return j&&j.n?`${j.wr}%`:"–";}, trn:x=>{const j=trs.get(x.h.trar);return j&&j.n?`${j.wr}%`:"–";},
-    ratg:x=>x.f.ratg==null?"–":String(x.f.ratg)};
-  const chips=FACTORS.map(([k,w])=>`<button type="button" class="fchip" aria-pressed="${factorOn.has(k)}" data-f="${k}">${t.fnames[k]} <small>${Math.round(w*100)}%</small></button>`).join("");
-  const head=`<th class="n">#</th><th class="n">${t.fcols[0]}</th><th>${t.fcols[1]}</th><th class="n"><button type="button" data-s="model" class="${rankSort==="model"?"on":""}">${t.modelP}${rankSort==="model"?" ↓":""}</button></th>`+
-    FACTORS.map(([k])=>`<th class="n fc ${factorOn.has(k)?"":"off"}"><button type="button" data-s="${k}" class="${rankSort===k?"on":""}">${t.fnames[k]}${rankSort===k?" ↓":""}</button></th>`).join("");
+  const runs=n=>ko?`${n}전`:`${n}r`;
+  const fmt={
+    dist:x=>{const a=x.a.dist; return a.v!=null?`${a.v.toFixed(1)}${ko?"착":""} <small>· ${runs(a.n)}</small>`:a.est?`<small>${ko?"추정":"est."}</small>`:"–";},
+    form:x=>{const a=x.a.form; return a.v!=null?`${a.v.toFixed(1)}${ko?"착":""} <small>· ${a.seq.map(p=>p===99?"–":p).join("·")}</small>`:"–";},
+    hwin:x=>{const a=x.a.hwin; return a.v!=null?`${a.v.toFixed(0)}% <small>· ${runs(a.n)}</small>`:"–";},
+    jock:x=>{const a=x.a.jock; return a.v!=null?`${a.v.toFixed(1)}% <small>· ${runs(a.n)}</small>`:"–";},
+    trn:x=>{const a=x.a.trn; return a.v!=null?`${a.v.toFixed(1)}% <small>· ${runs(a.n)}</small>`:"–";},
+    ratg:x=>x.a.ratg.v==null?"–":`R${x.a.ratg.v}`};
+  // 막대: 항목별 최고를 100%로. 낮을수록 좋은 항목(평균 착순)은 뒤집어서
+  const bar=(k,x)=>{const a=x.a[k]; if(a.v==null) return 0; const vals=rows.map(y=>y.a[k].v).filter(v=>v!=null); const mn=Math.min(...vals),mx=Math.max(...vals); if(mx===mn) return 100; return a.lo?(mx-a.v)/(mx-mn)*100:(a.v-mn)/(mx-mn)*100;};
+  const head=`<th class="n">#</th><th class="n">${t.fcols[0]}</th><th>${t.fcols[1]}</th><th class="n"><button type="button" data-s="model" class="${key==="model"?"on":""}">${t.modelP}${key==="model"?" ↓":""}</button></th>`+
+    FACTORS.map(([k,w])=>`<th class="n fc"><button type="button" data-s="${k}" class="${key===k?"on":""}">${t.fnames[k]}${key===k?" ↓":""}<small>${Math.round(w*100)}%</small></button></th>`).join("");
   const trows=rows.map((x,i)=>`<tr tabindex="0" data-n="${x.h.no}"><td class="n"><b>${i+1}</b></td><td class="n">${saddle(x.h.no)}</td>
      <td class="hn">${chipBtn("horse",x.h.hrnm)}${(()=>{const f=finishOf(x.h);return f?` <span class="place p${f<=3?f:0}" title="${t.finished}">${f===99?"–":f}</span>`:"";})()}<div class="sub2">${esc(pname(x.h.jck))} · ${esc(pname(x.h.trar))}</div></td>
-     <td class="n"><div class="pbar"><i style="width:${x.prob/maxP*100}%"></i></div><span class="pv">${x.prob.toFixed(1)}%</span></td>`+
-     FACTORS.map(([k])=>`<td class="n fc ${factorOn.has(k)?"":"off"}"><div class="fbar" ${tipAttr(`${t.fnames[k]}: ${fmt[k](x)}`)}><i style="width:${x.n[k]*100}%"></i></div><span class="fv">${fmt[k](x)}</span></td>`).join("")+`</tr>`).join("");
-  body.innerHTML=`<div class="ehead"><p>${t.rankNote}</p></div><div class="fchips">${chips}</div>
+     <td class="n ${key==="model"?"sortcol":""}"><div class="pbar"><i style="width:${x.prob/maxP*100}%"></i></div><span class="pv">${x.prob.toFixed(1)}%</span></td>`+
+     FACTORS.map(([k])=>`<td class="n fc ${key===k?"sortcol":""}"><div class="fbar"><i style="width:${bar(k,x)}%"></i></div><span class="fv">${fmt[k](x)}</span></td>`).join("")+`</tr>`).join("");
+  const sortNote=key==="model"?t.sortModel:t.sortBy(t.fnames[key]);
+  body.innerHTML=`<div class="ehead"><p>${t.rankNote}</p></div><p class="sortnote">${sortNote}</p>
     <div class="tbl"><table class="ranktbl"><thead><tr>${head}</tr></thead><tbody>${trows}</tbody></table></div><p class="chnote">${t.rankLegend}</p>
     <details class="why"><summary>${t.whyTitle}</summary><div class="whybody">${t.whyBody}</div></details>`;
-  body.querySelectorAll(".fchip").forEach(b=>b.onclick=()=>{const k=b.dataset.f; if(factorOn.has(k)){if(factorOn.size>1) factorOn.delete(k);} else factorOn.add(k); renderRank(field);});
   body.querySelectorAll("th button").forEach(b=>b.onclick=()=>{rankSort=b.dataset.s; renderRank(field);});
 }
 
@@ -1259,11 +1283,12 @@ function buildStory(field,race){
   if(unrated&&set){ const ap=field.filter(h=>h.wgt&&h.wgt<55); if(ap.length) w.push(ko?`55kg 미만을 지는 말: ${ap.map(h=>`${chipBtn("horse",h.hrnm)} ${h.wgt}kg`).join(", ")} — ${glBtn("apprentice","수습기수")} 감량으로 보입니다.`:`Carrying under 55 kg: ${ap.map(h=>`${chipBtn("horse",h.hrnm)} ${h.wgt} kg`).join(", ")} — this points to an ${glBtn("apprentice","apprentice")} claiming an allowance.`); }
   const none=field.filter(h=>h.recAll[0]>0&&!runHist(h.hrnm).length); if(none.length&&none.length<n) w.push(ko?`최근 기록 데이터에 경주가 없는 말: ${nm(none.map(h=>({h})))}. 쉬었다 나왔을 수 있습니다.`:`No run in the recent data for: ${nm(none.map(h=>({h})))}. They may be returning from a break.`);
   const bl=field.filter(h=>h.bleed&&h.bleed.length); if(bl.length) w.push(ko?`폐출혈 기록이 확인된 말: ${nm(bl.map(h=>({h})))}.`:`Bleeding record on file: ${nm(bl.map(h=>({h})))}.`);
+  const wline=ko?"여섯 항목 가중 합산: 거리 적성 15% · 최근 폼 25% · 말 승률 15% · 기수 승률 15% · 조교사 승률 10% · 레이팅 20%. 항목별 순위는 '예측 순위' 탭에서 볼 수 있습니다.":"Weighted across six factors: distance fit 15% · recent form 25% · horse win % 15% · jockey win % 15% · trainer win % 10% · rating 20%. Per-factor rankings are on the Model rank tab.";
   const H=ko?["이 경주는 어떤 경주인가","누가 앞서 보이나","어떻게 흘러갈까","주의할 점","한 줄 정리"]:["What kind of race is this?","Who looks best","How it may unfold","Watch-outs","Bottom line"];
   const bottom=ko?`모델 상위는 ${top.map(x=>`#${x.h.no}`).join(" · ")}입니다. 반영된 최근 경주가 많지 않으니 ${glBtn("card","출전표")}와 함께 참고용으로 보세요.`
                  :`The model's top three are ${top.map(x=>`#${x.h.no}`).join(", ")}. It only sees a limited window of recent results, so use it alongside the ${glBtn("card","race card")} rather than on its own.`;
   return `<div class="story"><div><h4>${H[0]}</h4><p>${p1}</p></div>
-    <div><h4>${H[1]}</h4><ul>${li}</ul><p style="margin-top:8px">${p2}</p></div>
+    <div><h4>${H[1]}</h4><ul>${li}</ul><p style="margin-top:8px">${p2}</p><p class="chnote" style="margin-top:6px">${wline}</p></div>
     <div><h4>${H[2]}</h4><p>${p3}</p></div>
     <div><h4>${H[3]}</h4>${w.length?`<ul class="wl">${w.map(x=>`<li><span>•</span><span>${x}</span></li>`).join("")}</ul>`:`<p>${ko?"눈에 띄는 주의 사항은 없습니다.":"Nothing stands out."}</p>`}</div>
     <div><h4>${H[4]}</h4><p>${bottom}</p></div>
