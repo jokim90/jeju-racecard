@@ -397,6 +397,12 @@ html[lang="ko"] .navtabs a{font-size:15px}
 .ranktbl th button small{display:block;font-weight:400;color:var(--muted);font-size:10px;line-height:1.2}
 .ranktbl td.sortcol{background:color-mix(in srgb,var(--sea) 8%,transparent)}
 .ranktbl .fv small{color:var(--muted);font-size:11px}
+.livebar{display:flex;justify-content:flex-end;margin-bottom:-10px}
+.livebadge{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:12px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:4px 12px;background:var(--surface)}
+.livebadge i{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.livebadge.on{color:#b3261e;border-color:#e3a19b}
+.livebadge.on i{background:#d3262b;animation:pulse 1.6s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
 </style>
 
 <nav class="topnav" aria-label="Main">
@@ -433,6 +439,7 @@ html[lang="ko"] .navtabs a{font-size:15px}
   </div>
 
   <div id="pgResults" class="pg" hidden>
+  <div class="livebar"><span id="liveBadge" class="livebadge" hidden></span></div>
   <section class="results" id="results"></section>
   </div>
 
@@ -720,7 +727,7 @@ function render(){
     <span class="rno">${r.raceNo}R</span><span class="rclass">${esc(classLabel(r.raceClas))}</span>
     <span class="rmeta">${esc(r.strtTm||r.strtPargTm)} · ${r.raceDs}m</span></button>`).join("");
   $("strip").querySelectorAll(".rbtn").forEach(b=>b.onclick=()=>{sel=+b.dataset.i;hsel=null;rsel=null;render();});
-  renderRace(); renderResults(); renderTerms(); renderNav(); renderHome(); render101(); route();
+  renderRace(); renderResults(); renderTerms(); renderNav(); renderHome(); render101(); route(); liveBadge();
 }
 
 function renderRace(){
@@ -1442,12 +1449,29 @@ initDays(); render();
 // 자동 업데이트: 같은 주소에 올라간 latest.json(수집기가 예약 실행으로 갱신)을 열 때마다 불러온다.
 // 없으면(예: 미리보기 환경) 조용히 내장 샘플 데이터를 그대로 쓴다.
 const DATA_URL="latest.json";
-(async function autoLoad(){
+var lastCollected=null, liveInfo=null;
+function liveBadge(){
+  const b=$("liveBadge"); if(!b) return;
+  if(!liveInfo){ b.hidden=true; return; }
+  const today=(()=>{const d=new Date();return `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,"0")}${String(d.getDate()).padStart(2,"0")}`;})();
+  const isToday=liveInfo.date===today; b.hidden=false; b.className="livebadge"+(isToday?" on":"");
+  b.innerHTML=`<i></i>${isToday?(lang==="ko"?"LIVE · 경주일 10분마다 갱신":"LIVE · updates every 10 min on race day"):(lang==="ko"?"최근 갱신":"Last updated")} <b>${esc(liveInfo.at||lastCollected||"")}</b>`;
+}
+async function loadLatest(first){
   try{
     const r=await fetch(DATA_URL+"?t="+Date.now(),{cache:"no-store"}); if(!r.ok) return;
     const raw=await r.text(); const j=JSON.parse(raw); if(!j.bundle) return;
+    if(!first && j.collected===lastCollected) return;   // 바뀐 게 없으면 그대로
+    lastCollected=j.collected; liveInfo=j.live||{date:"",at:j.collected};
+    const keep={day:curDay,sel,view,resKey,resSel};
     runIngest(raw);
+    if(!first){ if(days.has(keep.day)){useDay(keep.day); sel=keep.sel; view=keep.view;} resKey=keep.resKey; resSel=keep.resSel; render(); }
     const m=$("msg"); if(m.className==="msg" && j.collected) m.textContent+=" · "+(lang==="ko"?"자동 갱신 ":"auto-updated ")+j.collected;
+    liveBadge();
   }catch(e){}
-})();
+}
+loadLatest(true);
+// 열려 있는 동안 2분마다 새 데이터가 올라왔는지 확인 (탭이 보일 때만)
+setInterval(()=>{ if(document.visibilityState==="visible") loadLatest(false); },120000);
+document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible") loadLatest(false); });
 </script>
