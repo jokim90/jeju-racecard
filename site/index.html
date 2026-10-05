@@ -403,6 +403,16 @@ html[lang="ko"] .navtabs a{font-size:15px}
 .livebadge.on{color:#b3261e;border-color:#e3a19b}
 .livebadge.on i{background:#d3262b;animation:pulse 1.6s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+.fmode{display:flex;gap:4px;background:var(--chip);border-radius:999px;padding:3px;align-self:flex-start}
+.fmode button{border:0;background:transparent;color:var(--muted);font:inherit;font-size:13px;padding:5px 12px;border-radius:999px;cursor:pointer}
+.fmode button[aria-pressed="true"]{background:var(--surface);color:var(--ink);font-weight:700;box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.ehead{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-start}
+.stchip{display:inline-block;font-size:12px;font-weight:700;padding:2px 8px;border-radius:999px;background:var(--chip);color:var(--ink);white-space:nowrap}
+.stchip.s-front{background:#d3262b;color:#fff}.stchip.s-stalk{background:var(--tangerine);color:#fff}.stchip.s-mid{background:var(--sea);color:#fff}.stchip.s-closer{background:var(--navy);color:#fff}
+tr.grp td{background:var(--chip);font-size:13px;padding:7px 10px;border-left:4px solid var(--muted)}
+tr.grp td span{font-family:var(--mono);color:var(--muted);margin-left:4px}
+tr.grp td small{display:block;font-weight:400;color:var(--muted);font-size:12px}
+tr.grp.s-front td{border-left-color:#d3262b}tr.grp.s-stalk td{border-left-color:var(--tangerine)}tr.grp.s-mid td{border-left-color:var(--sea)}tr.grp.s-closer td{border-left-color:var(--navy)}
 </style>
 
 <nav class="topnav" aria-label="Main">
@@ -524,7 +534,7 @@ const T = {
 <p><b>이 방식의 약점.</b> 격차 크기가 사라집니다. 레이팅이 101·100·99인 경주와 101·70·50인 경주에서 1위 말의 레이팅 점수는 둘 다 1.0으로 같지만, 실제로는 뒤쪽 경주의 1위가 훨씬 유리합니다. 경주 간 비교도 되지 않습니다. 1R의 36%와 7R의 36%는 같은 뜻이 아닙니다. 표본이 2~3두뿐인 요소는 상대 비교가 과장됩니다.</p>
 <p><b>다음 단계.</b> 레이팅 차이, 해당 거리 실제 승률처럼 절대 기준으로 먼저 점수를 매긴 뒤 경주 안에서 승률로 바꾸면 격차 크기가 살아납니다. 결과가 쌓이면 가중치를 손으로 정하는 대신 실제 결과에 맞춰 학습시킬 수 있습니다. 지금 버전은 그 전 단계의 참고용 모델입니다.</p>`,
   paceTitle:"전개 (구간 통과 순위)",finish:"결승",others:"4착 이하",paceNote:"S1F는 출발 후 첫 200m 지점, 2C~4C는 코너 통과, G1F는 결승 200m 전 순위입니다. 선에 마우스를 올리면 말별 통과 순위가 나옵니다. 결승선 옆 @는 단승 배당입니다.",
-  styleTitle:"주행 스타일",styles:{front:"선행",stalk:"선입",mid:"중단",closer:"추입"},lead:"선두",back:"후미",earlyAvg:"초반 평균",earlyPos:"S1F 통과 순위",finishPos:"결승 착순",
+  styleTitle:"주행 스타일",styles:{front:"선행",stalk:"선입",mid:"중단",closer:"추입",none:"기록 없음"},styleDesc:{front:"초반에 앞으로 나가 선두에서 달리는 말",stalk:"선두 바로 뒤에 붙어 가다 직선에서 겨루는 말",mid:"중위권에서 흐름을 보다 막판에 올라오는 말",closer:"후미에서 따라가다 마지막에 추입하는 말",none:"구간 통과 순위 기록이 아직 없는 말(신마 등)"},byStyle:"포지션별",byGate:"마번순",styleCol:"포지션",styleBasis:n=>`최근 ${n}전 기준`,lead:"선두",back:"후미",earlyAvg:"초반 평균",earlyPos:"S1F 통과 순위",finishPos:"결승 착순",
   styleNote:"각 선은 한 경주입니다. 왼쪽 점이 초반(S1F) 위치, 오른쪽 점이 결승 착순이며 경주 내 순위를 0(선두)~100(후미)으로 바꾼 값입니다.",loadedPace:n=>`구간 기록 ${n}건을 불러왔습니다.`,
   others2:"2착 이하",
   gateColors:"색 = 마번",ring:"테두리",
@@ -599,7 +609,7 @@ const T = {
 <p><b>The weakness.</b> The size of the gap is lost. In a race rated 101·100·99 and one rated 101·70·50, the top horse scores 1.0 for rating in both, yet the second horse is far better placed. Numbers are not comparable across races: 36% in race 1 does not mean the same as 36% in race 7. A factor with only two or three horses of data gets exaggerated.</p>
 <p><b>Next step.</b> Score factors on an absolute basis first (rating differences, actual win rate at the distance) and only then convert to a within-race percentage, so gap size survives. Once enough results accumulate, the weights can be fitted to outcomes instead of set by hand. This version is the reference model before that step.</p>`,
   paceTitle:"Pace (position at each call)",finish:"Finish",others:"4th or worse",paceNote:"S1F is 200m after the start, 2C–4C are the turns, G1F is 200m from home. Hover a line for that horse's calls. @ beside the finish is the win dividend (SP).",
-  styleTitle:"Running style",styles:{front:"Front-runner",stalk:"Stalker",mid:"Midfield",closer:"Closer"},lead:"Lead",back:"Rear",earlyAvg:"Early avg",earlyPos:"Position at S1F",finishPos:"Finish",
+  styleTitle:"Running style",styles:{front:"Front runner",stalk:"On pace",mid:"Stalker",closer:"Closer",none:"No data"},styleDesc:{front:"Goes forward early and leads",stalk:"Sits just behind the leaders and challenges in the straight",mid:"Travels midfield and runs on late",closer:"Settles at the rear and finishes fast",none:"No sectional records yet (e.g. debutants)"},byStyle:"By position",byGate:"By gate",styleCol:"Position",styleBasis:n=>`last ${n} runs`,lead:"Lead",back:"Rear",earlyAvg:"Early avg",earlyPos:"Position at S1F",finishPos:"Finish",
   styleNote:"Each line is one run: the left dot is the early (S1F) position, the right dot the finish, both scaled 0 (lead) to 100 (rear) within the field.",loadedPace:n=>`Loaded ${n} sectional rows.`,
   others2:"2nd or worse",
   gateColors:"colour = gate",ring:"ring",
@@ -841,12 +851,16 @@ function renderEntries(){
   if(view==="story") renderStory(field); else if(view==="field") renderField(field); else if(view==="rank") renderRank(field); else renderReg(ents);
 }
 
+let fieldMode="style";
+const STYLE_ORDER=["front","stalk","mid","closer","none"];
 function renderField(field){
   const t=T[lang], r=races[sel], body=$("tabbody");
   const maxW=Math.max(...field.map(h=>h.wgt)), minW=Math.min(...field.map(h=>h.wgt));
-  const rows=field.map(h=>{const rt=ratingOf(h); const w=(h.wgt-minW)/((maxW-minW)||1);
+  const stOf=h=>{const st=styleOf(h.hrnm); return {k:st?st.k:"none",n:st?st.n:0};};
+  const rowOf=h=>{const rt=ratingOf(h); const w=(h.wgt-minW)/((maxW-minW)||1); const st=stOf(h);
    return `<tr tabindex="0" data-n="${h.no}" aria-selected="${rsel===h.no}">
     <td class="n">${saddle(h.no)}</td>
+    <td><span class="stchip s-${st.k}" ${st.n?tipAttr(t.styleBasis(st.n)):""}>${t.styles[st.k]}</span></td>
     <td class="hn">${chipBtn("horse",h.hrnm)}${(()=>{const x=finishOf(h);return x?` <span class="place p${x<=3?x:0}" title="${t.finished}">${x===99?"–":x}</span>`:"";})()}</td>
     <td><span class="sx">${esc(t.sexes[h.gndr]||h.gndr)}</span> ${esc(t.ageU(h.ag))}</td>
     <td class="n"><span class="rt"><i style="width:${8+w*32}px"></i>${h.wgt}</span></td>
@@ -855,10 +869,18 @@ function renderField(field){
     <td class="form">${formLine(h.hrnm)||"<span class='noform'>–</span>"}</td>
     <td class="n">${lang==="ko"?recStr(h.recAll):`${h.recAll[0]}: ${h.recAll[1]}-${h.recAll[2]}-${h.recAll[3]}`}</td>
     <td class="n">${esc(t.man(h.career))}</td>
-    <td>${h.treat.length?`<span class="flag">${t.vetFlag}</span>`:""}</td></tr>`;}).join("");
-  body.innerHTML=`<div class="ehead"><p>${t.fieldNote(maxW,minW,String(r.cndtsBurdWgt).includes("핸디캡"))}</p></div>
-   <div class="tbl"><table><thead><tr>${t.fcols.map((c,i)=>`<th class="${[0,3,5,7,8].includes(i)?"n":""}">${c}</th>`).join("")}</tr></thead><tbody>${rows}</tbody></table></div>
+    <td>${h.treat.length?`<span class="flag">${t.vetFlag}</span>`:""}</td></tr>`;};
+  const cols=[t.fcols[0],t.styleCol,...t.fcols.slice(1)], nCols=cols.length;
+  let rows;
+  if(fieldMode==="style"){
+    rows=STYLE_ORDER.map(k=>{const g=field.filter(h=>stOf(h).k===k); if(!g.length) return "";
+      return `<tr class="grp s-${k}"><td colspan="${nCols}"><b>${t.styles[k]}</b> <span>${g.length}</span><small>${t.styleDesc[k]}</small></td></tr>`+g.map(rowOf).join("");}).join("");
+  } else rows=field.map(rowOf).join("");
+  const toggle=`<div class="fmode" role="group"><button type="button" aria-pressed="${fieldMode==="style"}" data-m="style">${t.byStyle}</button><button type="button" aria-pressed="${fieldMode==="gate"}" data-m="gate">${t.byGate}</button></div>`;
+  body.innerHTML=`<div class="ehead"><p>${t.fieldNote(maxW,minW,String(r.cndtsBurdWgt).includes("핸디캡"))}</p>${toggle}</div>
+   <div class="tbl"><table><thead><tr>${cols.map((c,i)=>`<th class="${[0,4,6,8,9].includes(i)?"n":""}">${c}</th>`).join("")}</tr></thead><tbody>${rows}</tbody></table></div>
    <div id="profile"></div>`;
+  body.querySelectorAll(".fmode button").forEach(b=>b.onclick=()=>{fieldMode=b.dataset.m; renderField(field);});
   body.querySelectorAll("tbody tr").forEach(tr=>{const go=()=>{rsel=+tr.dataset.n;renderField(field);$("profile").scrollIntoView({block:"nearest",behavior:"smooth"});};
     tr.onclick=go; tr.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();go();}};});
   const h=field.find(x=>x.no===rsel); if(!h) return;
