@@ -858,7 +858,7 @@ function renderEntries(){
   if(view==="story") renderStory(field); else if(view==="field") renderField(field); else if(view==="rank") renderRank(field); else renderReg(ents);
 }
 
-let fieldMode="style";
+let fieldMode="gate";
 const STYLE_ORDER=["front","stalk","mid","closer","none"];
 function renderField(field){
   const t=T[lang], r=races[sel], body=$("tabbody");
