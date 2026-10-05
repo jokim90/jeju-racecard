@@ -382,7 +382,7 @@ html[lang="ko"] .navtabs a{font-size:15px}
 .foot a{color:#fff;text-decoration:none}
 .foot .links{display:flex;gap:18px;flex-wrap:wrap}
 .foot small{display:block;font-size:15px;color:#aab3cc}
-.hero.small{min-height:0;background:none;padding:12px 0 8px;display:grid;justify-content:start;align-items:start}
+.hero.small{height:auto;min-height:0;background:none;padding:12px 0 8px;display:grid;justify-content:start;align-items:start}
 .hero.small::after{display:none}
 .hero.small h1{font-family:var(--display);font-style:normal;font-weight:400;font-size:clamp(32px,7vw,52px);text-shadow:none;color:var(--ink);line-height:1.1}
 .hero.small p{margin:0;font-size:17px;color:var(--muted);max-width:70ch}
@@ -420,6 +420,13 @@ tr.grp.s-front td{border-left-color:#d3262b}tr.grp.s-stalk td{border-left-color:
 .story .pred{max-width:none}
 .pred .pacetrack>.chnote{display:none}
 .flowtxt{margin-top:10px!important}
+.pgmodel{display:grid;gap:22px}
+.mstats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.mstats .stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.mstats .stat .v{font-family:var(--display);font-size:30px;line-height:1.1}
+.mblock{display:grid;gap:10px}
+.mtbl tr.hit td{background:color-mix(in srgb,#2e8b57 12%,transparent)}
+.mtbl tr.near td{background:color-mix(in srgb,#e0ab2a 14%,transparent)}
 </style>
 
 <nav class="topnav" aria-label="Main">
@@ -427,7 +434,7 @@ tr.grp.s-front td{border-left-color:#d3262b}tr.grp.s-stalk td{border-left-color:
   <button type="button" class="burger" id="burger" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
   <div class="navr" id="navr">
     <div class="navtabs" id="navtabs">
-      <a href="#/card" data-r="card"></a><a href="#/results" data-r="results"></a><a href="#/101" data-r="101"></a>
+      <a href="#/card" data-r="card"></a><a href="#/results" data-r="results"></a><a href="#/model" data-r="model"></a><a href="#/101" data-r="101"></a>
     </div>
     <div class="lang" role="group" aria-label="Language">
       <button type="button" id="lang-ko" aria-pressed="false">한국어</button>
@@ -455,6 +462,7 @@ tr.grp.s-front td{border-left-color:#d3262b}tr.grp.s-stalk td{border-left-color:
   <main class="race" id="race"></main>
   </div>
 
+  <section id="pgModel" class="pgmodel" hidden></section>
   <div id="pgResults" class="pg" hidden>
   <div class="livebar"><span id="liveBadge" class="livebadge" hidden></span></div>
   <section class="results" id="results"></section>
@@ -698,11 +706,63 @@ function goingInfo(g){ const m=String(g||"").match(/^([^(]+)\(?(\d+)?/); return 
 function parseDate(r){ const s=String(r.raceDt||""); return {y:s.slice(0,4),m:+s.slice(4,6),d:+s.slice(6,8),dw:r.raceDotw||""}; }
 function ratingLabel(s){ if(!s||s==="-")return "-"; if(s==="R0~0") return lang==="ko"?"신마·미승리마 (R0)":"Unrated (R0)"; return s.replace("~",lang==="ko"?"~":"–"); }
 
+/* ---- 모델 성적: 지난 경주일마다 경주 전 기준으로 선정을 다시 만들어 실제 착순과 비교 ---- */
+function backtest(){
+  const keep={curDay,races,runs,reg,sel,view,isSample};
+  const out=[]; const keys=[...days.keys()].sort();
+  keys.forEach(k=>{ const dy=days.get(k); if(dy.sample) return; const d=`${k.slice(0,4)}/${k.slice(4,6)}/${k.slice(6)}`;
+    const dayRes=results.filter(r=>r.date===d&&r.gbn==="R"); if(!dayRes.length) return;
+    useDay(k);
+    races.forEach(r=>{ const field=runs.filter(h=>h.raceNo==r.raceNo); const res=dayRes.filter(x=>x.no==r.raceNo).map(x=>({h:field.find(f=>f.hrnm===x.hrnm),p:pos(x.chak),x})).filter(x=>x.h&&x.p!==99).sort((a,b)=>a.p-b.p);
+      if(field.length<2||res.length<3) return;
+      const rk=rankField(field,r).sort((a,b)=>b.prob-a.prob); const m=rk.map(x=>x.h.no), a=res.map(x=>x.h.no);
+      const pr=paceFor(d,r.raceNo); let fav=null; if(pr.length){ const withOdds=pr.filter(p=>p.win>0); if(withOdds.length) fav=withOdds.sort((p,q)=>p.win-q.win)[0].gate; }
+      const winSp=(paceOf(d,r.raceNo,res[0].x.hrnm)||{}).win||null;
+      out.push({day:k,race:r.raceNo,dist:r.raceDs,cls:r.raceClas,n:field.length,model:rk.slice(0,3).map(x=>({no:x.h.no,name:x.h.hrnm,hrNo:x.h.hrNo,prob:x.prob})),actual:res.slice(0,3).map(x=>({no:x.h.no,name:x.h.hrnm,hrNo:x.h.hrNo})),
+        winRank:m.indexOf(a[0])+1,pickPos:a.indexOf(m[0])+1||99,overlap:m.slice(0,3).filter(x=>a.slice(0,3).includes(x)).length,fav,favWon:fav!=null?fav===a[0]:null,pickIsFav:fav!=null?fav===m[0]:null,winSp,topProb:rk[0].prob}); });
+  });
+  curDay=keep.curDay; races=keep.races; runs=keep.runs; reg=keep.reg; sel=keep.sel; view=keep.view; isSample=keep.isSample;
+  return out;
+}
+function renderModelPage(){
+  const ko=lang==="ko", rows=backtest(), n=rows.length, box=$("pgModel");
+  const pct=(a,b)=>b?`${Math.round(a/b*100)}%`:"–";
+  const win=rows.filter(r=>r.pickPos===1).length, plc=rows.filter(r=>r.pickPos<=3).length, w3=rows.filter(r=>r.winRank<=3).length, ov=sum(rows.map(r=>r.overlap));
+  const favRows=rows.filter(r=>r.fav!=null), favWon=favRows.filter(r=>r.favWon).length, diff=favRows.filter(r=>!r.pickIsFav), diffWon=diff.filter(r=>r.pickPos===1).length;
+  const avgProb=n?sum(rows.map(r=>r.topProb))/n:0;
+  const tile=(k,v,c)=>`<div class="stat"><div class="k">${k}</div><div class="v">${v}</div><div class="c">${c}</div></div>`;
+  const tiles=tile(ko?"경주 수":"Races",n,ko?`${new Set(rows.map(r=>r.day)).size}개 경주일`:`${new Set(rows.map(r=>r.day)).size} race days`)
+    +tile(ko?"1순위 우승":"Top pick won",pct(win,n),ko?`${win}/${n} · 1순위 평균 승률 ${avgProb.toFixed(0)}%`:`${win}/${n} · avg top-pick prob ${avgProb.toFixed(0)}%`)
+    +tile(ko?"1순위 입상(3착 내)":"Top pick placed (1–3)",pct(plc,n),`${plc}/${n}`)
+    +tile(ko?"우승마가 상위 3두 안":"Winner in top 3",pct(w3,n),`${w3}/${n}`)
+    +tile(ko?"상위 3두 ↔ 1~3착 겹침":"Top 3 vs placed overlap",pct(ov,3*n),`${ov}/${3*n}`)
+    +tile(ko?"인기 1위마 우승":"Favourite won",pct(favWon,favRows.length),ko?`${favWon}/${favRows.length} (SP 기준)`:`${favWon}/${favRows.length} (by SP)`)
+    +tile(ko?"모델≠인기마일 때 적중":"When pick ≠ favourite",pct(diffWon,diff.length),ko?`${diffWon}/${diff.length}경주`:`${diffWon}/${diff.length} races`);
+  // 경주일별
+  const byDay=new Map(); rows.forEach(r=>{if(!byDay.has(r.day)) byDay.set(r.day,[]); byDay.get(r.day).push(r);});
+  const dayRows=[...byDay.entries()].sort((a,b)=>a[0]<b[0]?1:-1).map(([d,rs])=>`<tr><td>${d.slice(0,4)}.${d.slice(4,6)}.${d.slice(6)}</td><td class="n">${rs.length}</td><td class="n">${rs.filter(r=>r.pickPos===1).length}</td><td class="n">${rs.filter(r=>r.pickPos<=3).length}</td><td class="n">${rs.filter(r=>r.winRank<=3).length}</td><td class="n">${rs.filter(r=>r.favWon).length}/${rs.filter(r=>r.fav!=null).length}</td></tr>`).join("");
+  const dayCols=ko?["경주일","경주","1순위 우승","1순위 입상","우승마 상위3","인기마 우승"]:["Day","Races","Pick won","Pick placed","Winner in top 3","Fav won"];
+  // 경주별
+  const raceRows=rows.slice().sort((a,b)=>a.day<b.day?1:a.day>b.day?-1:a.race-b.race).map(r=>{const hit=r.pickPos===1?"hit":r.pickPos<=3?"near":"miss";
+    return `<tr class="${hit}"><td>${r.day.slice(4,6)}.${r.day.slice(6)} ${r.race}R <small>${r.dist}m</small></td>
+      <td>${r.model.map((x,i)=>`${saddle(x.no)} ${chipBtn("horse",x.name)}${i===0?` <b>${x.prob.toFixed(0)}%</b>`:""}`).join(" · ")}</td>
+      <td>${r.actual.map(x=>`${saddle(x.no)} ${chipBtn("horse",x.name)}`).join(" · ")}</td>
+      <td class="n">${r.pickPos===99?"–":ordL(r.pickPos)}</td><td class="n">${r.overlap}/3</td><td class="n">${r.fav!=null?(r.pickIsFav?(ko?"=인기마":"= fav"):`#${r.fav}`):"–"}</td><td class="n">${r.winSp?r.winSp.toFixed(1):"–"}</td></tr>`;}).join("");
+  const raceCols=ko?["경주","모델 1·2·3순위","실제 1·2·3착","1순위 착순","겹침","인기마","우승마 SP"]:["Race","Model 1·2·3","Actual 1·2·3","Pick finished","Overlap","Favourite","Winner SP"];
+  box.innerHTML=`<div class="hero small"><div class="eyebrow">${T[lang].nav.model}</div><h1>${ko?"모델 성적표":"Model record"}</h1><p>${ko?"경주일마다 경주 전 데이터만으로 '누가 앞서 보이나' 선정을 다시 만들어 실제 착순과 비교합니다. 결과가 들어올 때마다 자동으로 쌓입니다.":"For every race day, the 'Who looks best' selection is rebuilt from pre-race data only and compared with the actual result. It accumulates automatically as results arrive."}</p></div>
+    ${n?`<div class="stats mstats">${tiles}</div>
+    <section class="mblock"><h3>${ko?"경주일별":"By race day"}</h3><div class="tbl"><table><thead><tr>${dayCols.map((c,i)=>`<th class="${i?"n":""}">${c}</th>`).join("")}</tr></thead><tbody>${dayRows}</tbody></table></div></section>
+    <section class="mblock"><h3>${ko?"경주별":"By race"}</h3><div class="tbl"><table class="mtbl"><thead><tr>${raceCols.map((c,i)=>`<th class="${i>=3?"n":""}">${c}</th>`).join("")}</tr></thead><tbody>${raceRows}</tbody></table></div>
+    <p class="chnote">${ko?"초록 줄 = 1순위 우승, 노란 줄 = 1순위 입상. 기수·조교사 통산 승률은 현재 값을 쓰므로 과거 경주에는 약간의 사후 정보가 섞입니다. 인기마는 구간 기록 API의 단승 배당(SP) 최저 말입니다.":"Green row = top pick won, yellow = top pick placed. Jockey and trainer career rates are today's values, so older races carry a little hindsight. Favourite = lowest starting price (SP) from the sectional data."}</p></section>`
+    :`<p class="noent">${ko?"비교할 경주 결과가 아직 없습니다.":"No completed races to compare yet."}</p>`}`;
+  box.querySelectorAll(".ent").forEach(b=>b.onclick=()=>openEntity(b.dataset.kind,b.dataset.name));
+}
+
 /* ---- 화면 전환(홈 / 레이스카드 / 결과 / 101) ---- */
-const ROUTES=["card","results","101"];
-function curRoute(){ const h=location.hash.replace(/^#\/?/,"").split("/")[0]; return ROUTES.includes(h)?h:"home"; }
+const ROUTES=["card","results","101"]; const NAVR=["card","results","model","101"];
+function curRoute(){ const h=location.hash.replace(/^#\/?/,"").split("/")[0]; return NAVR.includes(h)?h:"home"; }
 function route(){
-  const r=curRoute(); $("home").hidden=r!=="home"; document.querySelector(".wrap").hidden=r==="home"; $("pgCard").hidden=r!=="card"; $("pgResults").hidden=r!=="results"; $("p101").hidden=r!=="101";
+  const r=curRoute(); $("home").hidden=r!=="home"; document.querySelector(".wrap").hidden=r==="home"; $("pgCard").hidden=r!=="card"; $("pgResults").hidden=r!=="results"; $("p101").hidden=r!=="101"; $("pgModel").hidden=r!=="model"; if(r==="model") renderModelPage();
   $("gloss").hidden=r!=="card"; document.querySelector(".load").hidden=!(r==="card"||r==="results");
   if(r==="results"&&!resGroups().length){ $("results").hidden=false; $("results").innerHTML=`<h2>${T[lang].resTitle}</h2><p class="noent">${T[lang].noResults}</p>`; }
   document.querySelectorAll("#navtabs a").forEach(a=>a.setAttribute("aria-current",a.dataset.r===r?"page":"false"));
@@ -1257,8 +1317,8 @@ const PRIMER=[
   s:"2026 Jeju Racing Plan, p.16"}
 ];
 const GLKEY={class:"class",rating:"class",weight:"weight",apprentice:"weight",trial:"trials",breed:"horses",prize:"prize",distance:"distance",card:"card"};
-Object.assign(T.ko,{brand:"제주경마",nav:{card:"레이스카드",results:"경주 결과","101":"JEJU 101"},homeKicker:"제주경마공원 · 한국 조랑말 경주",homeTitle:"제주경마, 처음이라도 읽히게",homeLede:"서러브레드만 보던 분을 위한 제주 조랑말 경주 안내서입니다. 다가오는 출전표, 지난 결과, 그리고 규칙을 한눈에.",homeCards:{card:["다가오는 경주의 출전표와 경주별 스토리, 모델 순위, 말·기수·조교사 기록을 봅니다.","레이스카드 보기"],results:["지난 한 달 경주 결과와 구간별 전개를 트랙 위에서 다시 봅니다.","결과 보기"],"101":["등급, 레이팅, 부담중량, 상금, 심사 제도까지 처음 보는 분을 위한 짧은 카드 모음.","입문서 읽기"]},nextMeet:d=>`다음 경주일 ${d}`,lastMeet:d=>`최근 결과 ${d}`,cards:n=>`카드 ${n}장`,racesN:n=>`${n}경주`,noResults:"아직 불러온 경주 결과가 없습니다.",heroSub:(d,n)=>`다음 경주일 ${d} · ${n}경주 · 제주경마공원`,heroCta:["레이스카드 보기","제주경마 입문"],explore:"무엇을 보시겠어요?",exploreLede:"다가오는 출전표, 지난 결과, 그리고 처음 보는 분을 위한 안내서.",footTitle:"제주경마 가이드",footOrg:"한국마사회 · 제주경마공원",footData:"데이터: 한국마사회 공공데이터(data.go.kr) · 규칙: 2026년 제주경마 시행계획",footNote:"비공식 안내 페이지입니다. 베팅은 각 지역의 법률에 따르세요.",storyTab:"스토리",primerBtn:"제주경마 입문",primerTitle:"제주경마 입문",primerLede:"외국에서 처음 보시는 분을 위한 짧은 안내입니다. 숫자는 한국마사회 「2026년 제주경마 시행계획」 기준입니다."});
-Object.assign(T.en,{brand:"Jeju Racing",nav:{card:"Race Card",results:"Results","101":"Jeju 101"},homeKicker:"Jeju Racecourse · Korean pony racing",homeTitle:"Jeju racing, explained for first-timers",homeLede:"A guide to Korean pony racing for punters who know Thoroughbreds. Upcoming race cards, past results, and how it all works.",homeCards:{card:["Upcoming race cards with a story for each race, model rankings, and horse, jockey and trainer records.","Open the race card"],results:["Results from the past month, with the pace of each race replayed on the track.","See results"],"101":["Classes, ratings, weights, prize money and trials: short cards for newcomers.","Read the primer"]},nextMeet:d=>`Next meeting ${d}`,lastMeet:d=>`Latest results ${d}`,cards:n=>`${n} cards`,racesN:n=>`${n} races`,noResults:"No results loaded yet.",heroSub:(d,n)=>`Next meeting ${d} · ${n} races · Jeju Racecourse`,heroCta:["Open race card","Jeju 101"],explore:"Where to start",exploreLede:"Upcoming race cards, past results, and a primer for first-time viewers.",footTitle:"Jeju Racing Guide",footOrg:"Korea Racing Authority · Jeju Racecourse",footData:"Data: KRA open data (data.go.kr) · Rules: 2026 Jeju Racing Plan",footNote:"Unofficial guide. Wagering is subject to the laws of your jurisdiction.",storyTab:"Story",primerBtn:"Jeju 101",primerTitle:"Jeju racing 101",primerLede:"A short guide for first-time viewers. Figures are from KRA's 2026 Jeju Racing Plan."});
+Object.assign(T.ko,{brand:"제주경마",nav:{card:"레이스카드",results:"경주 결과",model:"모델 성적","101":"JEJU 101"},homeKicker:"제주경마공원 · 한국 조랑말 경주",homeTitle:"제주경마, 처음이라도 읽히게",homeLede:"서러브레드만 보던 분을 위한 제주 조랑말 경주 안내서입니다. 다가오는 출전표, 지난 결과, 그리고 규칙을 한눈에.",homeCards:{card:["다가오는 경주의 출전표와 경주별 스토리, 모델 순위, 말·기수·조교사 기록을 봅니다.","레이스카드 보기"],results:["지난 한 달 경주 결과와 구간별 전개를 트랙 위에서 다시 봅니다.","결과 보기"],"101":["등급, 레이팅, 부담중량, 상금, 심사 제도까지 처음 보는 분을 위한 짧은 카드 모음.","입문서 읽기"]},nextMeet:d=>`다음 경주일 ${d}`,lastMeet:d=>`최근 결과 ${d}`,cards:n=>`카드 ${n}장`,racesN:n=>`${n}경주`,noResults:"아직 불러온 경주 결과가 없습니다.",heroSub:(d,n)=>`다음 경주일 ${d} · ${n}경주 · 제주경마공원`,heroCta:["레이스카드 보기","제주경마 입문"],explore:"무엇을 보시겠어요?",exploreLede:"다가오는 출전표, 지난 결과, 그리고 처음 보는 분을 위한 안내서.",footTitle:"제주경마 가이드",footOrg:"한국마사회 · 제주경마공원",footData:"데이터: 한국마사회 공공데이터(data.go.kr) · 규칙: 2026년 제주경마 시행계획",footNote:"비공식 안내 페이지입니다. 베팅은 각 지역의 법률에 따르세요.",storyTab:"스토리",primerBtn:"제주경마 입문",primerTitle:"제주경마 입문",primerLede:"외국에서 처음 보시는 분을 위한 짧은 안내입니다. 숫자는 한국마사회 「2026년 제주경마 시행계획」 기준입니다."});
+Object.assign(T.en,{brand:"Jeju Racing",nav:{card:"Race Card",results:"Results",model:"Model record","101":"Jeju 101"},homeKicker:"Jeju Racecourse · Korean pony racing",homeTitle:"Jeju racing, explained for first-timers",homeLede:"A guide to Korean pony racing for punters who know Thoroughbreds. Upcoming race cards, past results, and how it all works.",homeCards:{card:["Upcoming race cards with a story for each race, model rankings, and horse, jockey and trainer records.","Open the race card"],results:["Results from the past month, with the pace of each race replayed on the track.","See results"],"101":["Classes, ratings, weights, prize money and trials: short cards for newcomers.","Read the primer"]},nextMeet:d=>`Next meeting ${d}`,lastMeet:d=>`Latest results ${d}`,cards:n=>`${n} cards`,racesN:n=>`${n} races`,noResults:"No results loaded yet.",heroSub:(d,n)=>`Next meeting ${d} · ${n} races · Jeju Racecourse`,heroCta:["Open race card","Jeju 101"],explore:"Where to start",exploreLede:"Upcoming race cards, past results, and a primer for first-time viewers.",footTitle:"Jeju Racing Guide",footOrg:"Korea Racing Authority · Jeju Racecourse",footData:"Data: KRA open data (data.go.kr) · Rules: 2026 Jeju Racing Plan",footNote:"Unofficial guide. Wagering is subject to the laws of your jurisdiction.",storyTab:"Story",primerBtn:"Jeju 101",primerTitle:"Jeju racing 101",primerLede:"A short guide for first-time viewers. Figures are from KRA's 2026 Jeju Racing Plan."});
 function primerHtml(open){
   const t=T[lang], i=lang==="ko"?0:1;
   return `<section><h3>${t.primerTitle}</h3><p class="chnote">${t.primerLede}</p></section>`+PRIMER.map(c=>
