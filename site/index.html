@@ -1340,8 +1340,8 @@ function buildStory(field,race){
     const fastDuel=sp.length>=2&&Math.abs(sp[0].s.s1fRel-sp[1].s.s1fRel)<=0.2&&sp.slice(0,2).every(x=>x.s.k==="front"||x.s.k==="stalk");
     const exp=(lead.length>=2||fastDuel)?"fast":lead.length===0?"slow":"even";
     const fits=field.map(h=>({h,f:paceFit(h.hrnm)[exp]})).filter(x=>x.f.n>0).sort((a,b)=>b.f.avgPctl-a.f.avgPctl||a.f.avgFin-b.f.avgFin).slice(0,3);
-    const paceName={fast:ko?"빠른":"fast",even:ko?"보통":"even",slow:ko?"느린":"slow"}[exp];
-    p3+=ko?`<br><b>예상 초반 페이스: ${paceName}.</b> `:`<br><b>Expected early pace: ${paceName}.</b> `;
+    const paceName={fast:ko?"빠른":"fast",even:ko?"보통":"even",slow:ko?"느린":"slow"}[exp], paceLbl={fast:"빠름",even:"보통",slow:"느림"}[exp];
+    p3+=ko?`<br><b>예상 초반 페이스: ${paceLbl}.</b> `:`<br><b>Expected early pace: ${paceName}.</b> `;
     if(fits.length) p3+=ko?`${paceName} 페이스 경주에서 성적이 좋았던 말: ${fits.map(x=>`${chipBtn("horse",x.h.hrnm)} (${x.f.n}전 평균 ${x.f.avgFin.toFixed(1)}착)`).join(", ")}. `
                         :`Best records in ${paceName}-pace races: ${fits.map(x=>`${chipBtn("horse",x.h.hrnm)} (${x.f.n} run${x.f.n>1?"s":""}, avg finish ${x.f.avgFin.toFixed(1)})`).join(", ")}. `;
     else p3+=ko?`이 페이스에서 뛴 기록이 있는 말이 없습니다. `:`No runner has a record in a race run at this pace. `;
