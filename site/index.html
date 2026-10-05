@@ -1351,6 +1351,14 @@ function buildStory(field,race){
     if(fits.length) p3+=ko?`${paceName} 페이스 경주에서 성적이 좋았던 말: ${fits.map(x=>`${chipBtn("horse",x.h.hrnm)} (${x.f.n}전 평균 ${x.f.avgFin.toFixed(1)}착)`).join(", ")}. `
                         :`Best records in ${paceName}-pace races: ${fits.map(x=>`${chipBtn("horse",x.h.hrnm)} (${x.f.n} run${x.f.n>1?"s":""}, avg finish ${x.f.avgFin.toFixed(1)})`).join(", ")}. `;
     else p3+=ko?`이 페이스에서 뛴 기록이 있는 말이 없습니다. `:`No runner has a record in a race run at this pace. `;
+    // 결승 기록 비교: 거리 기준 기록(par) 대비 각 말의 예상 기록
+    const par=parTime(race.raceDs); const spd=field.map(h=>({h,s:horseSpeed(h.hrnm,race.raceDs)})).filter(x=>x.s).sort((a,b)=>a.s.est-b.s.est);
+    if(par&&spd.length>=2){ const top=spd.slice(0,3); const estWin=top[0].s.est; const dpar=estWin-par;
+      const line=x=>`${chipBtn("horse",x.h.hrnm)} ${fmtT(x.s.est)}${x.s.sameBest?(ko?` (이 거리 최고 ${fmtT(x.s.sameBest)})`:` (best at this trip ${fmtT(x.s.sameBest)})`):(ko?` (최근 ${x.s.lastDist}m ${fmtT(x.s.lastTime)} 환산)`:` (from ${x.s.lastDist} m in ${fmtT(x.s.lastTime)})`)}`;
+      const verdict=dpar<=-0.5?(ko?"기준보다 빠른, 수준 높은 경주":"a quick race, above par for the distance"):dpar>=0.5?(ko?"기준보다 느린 경주":"a slower race than par"):(ko?"기준 수준의 경주":"around par for the distance");
+      p3+=ko?`<br><b>기록 비교:</b> ${race.raceDs}m 기준 우승 기록은 ${fmtT(par)}(최근 우승 기록 중앙값)입니다. 최근 결승 기록을 거리별 기준에 맞춰 환산하면 가장 빠른 말은 ${top.map(line).join(", ")}입니다. 예상 우승 기록 ${fmtT(estWin)}(기준 대비 ${dpar<=0?"−":"+"}${Math.abs(dpar).toFixed(1)}초) — ${verdict}로 봅니다. `
+            :`<br><b>Time comparison:</b> par for ${race.raceDs} m is ${fmtT(par)} (median recent winning time). Scaling each runner's recent finishing times to this trip, the fastest are ${top.map(line).join(", ")}. Projected winning time ${fmtT(estWin)} (${dpar<=0?"−":"+"}${Math.abs(dpar).toFixed(1)} s vs par) — ${verdict}. `;
+    }
     if(cl.length>=2){ const top=cl.slice(0,2);
       p3+=ko?`마지막 200m가 가장 빠른 말은 ${top.map(x=>`${chipBtn("horse",x.h.hrnm)} ${x.s.g1fT.toFixed(1)}초`).join(", ")}로, 초반이 빠르게 흐르면 이쪽이 유리합니다.`
             :`Fastest final 200 m: ${top.map(x=>`${chipBtn("horse",x.h.hrnm)} ${x.s.g1fT.toFixed(1)}s`).join(", ")} — they benefit if the early pace is strong.`;
@@ -1378,7 +1386,7 @@ function buildStory(field,race){
                     :`<b>Early (S1F):</b> ${nm2(e[0])} leads with ${lst(e.slice(1,3))} close behind. <b>Last corner (4C):</b> ${nm2(c[0])} in front, ${lst(c.slice(1,3))} in striking range. <b>Straight and finish:</b>${kickTxt} The model has ${nm2(f[0])} winning from ${lst(f.slice(1,3))}.`;
         return `<p class="flowtxt">${txt}</p>`;})():""}
       ${field.length>=2?`<div class="pred"><div class="predhead"><b>${ko?"예상 전개 (모델)":"Estimated race flow (the model)"}</b><span class="chnote">${ko?"지점을 누르거나 재생으로 예상 순서를 봅니다":"Tap a call or press play to step through the predicted order"}</span></div><div class="pacetrack"></div>
-      <p class="chnote">${ko?`예측 방식: S1F는 각 말의 최근 초반 위치(S1F·첫 코너 평균), 4C는 최근 4C 통과 위치입니다. 4C 이후는 마지막 200m(G1F→결승) 평균 시간이 빠른 말이 앞으로 당겨지고(G1F: 4C 위치 40% + 막판 스피드 30% + 모델 30%), 결승은 모델 승률 60% + 막판 스피드 25% + 4C 위치 15%로 정합니다. 구간 기록이 없는 말은 중위권으로 둡니다. 빨간 점(노란 테두리)은 모델 1순위. 간격은 순서일 뿐 실제 거리가 아닙니다.`:`How it is built: S1F uses each horse's recent early position (S1F and first-corner average) and 4C its recent 4C position. After the 4C, horses with a faster average last 200 m (G1F to finish) are pulled forward (G1F: 40% 4C position + 30% closing speed + 30% model), and the finish is 60% model win probability + 25% closing speed + 15% 4C position. Horses with no sectionals are placed midfield. The red dot with a yellow ring is the model's top pick. Spacing shows order only, not real distance.`}</p></div>`:""}</div>
+      <p class="chnote">${ko?`예측 방식: S1F는 각 말의 최근 초반 위치(S1F·첫 코너 평균), 4C는 최근 4C 통과 위치입니다. 4C 이후는 마지막 200m(G1F→결승) 평균 시간이 빠른 말이 앞으로 당겨지고(G1F: 4C 위치 40% + 막판 스피드 25% + 예상 기록 10% + 모델 25%), 결승은 모델 승률 50% + 막판 스피드 20% + 예상 기록(거리 기준 대비 결승 기록) 15% + 4C 위치 15%로 정합니다. 구간 기록이 없는 말은 중위권으로 둡니다. 빨간 점(노란 테두리)은 모델 1순위. 간격은 순서일 뿐 실제 거리가 아닙니다.`:`How it is built: S1F uses each horse's recent early position (S1F and first-corner average) and 4C its recent 4C position. After the 4C, horses with a faster average last 200 m (G1F to finish) are pulled forward (G1F: 40% 4C position + 25% closing speed + 10% projected time + 25% model), and the finish is 50% model win probability + 20% closing speed + 15% projected time (finishing times scaled to par for the distance) + 15% 4C position. Horses with no sectionals are placed midfield. The red dot with a yellow ring is the model's top pick. Spacing shows order only, not real distance.`}</p></div>`:""}</div>
     <div><h4>${H[3]}</h4>${w.length?`<ul class="wl">${w.map(x=>`<li><span>•</span><span>${x}</span></li>`).join("")}</ul>`:`<p>${ko?"눈에 띄는 주의 사항은 없습니다.":"Nothing stands out."}</p>`}</div>
     <div><h4>${H[4]}</h4><p>${bottom}</p></div>
     <p class="chnote">${ko?"이 글은 경주 데이터와 시행계획에서 자동으로 만들어집니다. 밑줄 친 용어를 누르면 설명이 열립니다.":"Generated automatically from the race data and the Racing Plan. Tap an underlined term for an explanation."}</p></div>`;
@@ -1389,12 +1397,14 @@ function predictRows(field,race){
   const has2C=race.raceDs>TRK.seg.a+TRK.seg.right+TRK.seg.top;
   // 마지막 200m(G1F→결승) 스피드: 출전마 안에서 0(가장 빠름)~1(가장 느림). 기록 없으면 0.5
   const sts=rk.map(x=>styleOf(x.h.hrnm)); const gts=sts.map(st=>st&&st.g1fT!=null?st.g1fT:null).filter(v=>v!=null); const gmin=Math.min(...gts), gmax=Math.max(...gts);
+  const sps=rk.map(x=>horseSpeed(x.h.hrnm,race.raceDs)); const ests=sps.filter(v=>v).map(v=>v.est); const emin=Math.min(...ests), emax=Math.max(...ests);
   const rows=rk.map((x,i)=>{const st=sts[i]; const early=st?st.early:0.55, turn=st&&st.turn!=null?st.turn:early; const pn=maxP>minP?(x.prob-minP)/(maxP-minP):0.5;
     const close=(st&&st.g1fT!=null&&gmax>gmin)?(st.g1fT-gmin)/(gmax-gmin):0.5;
+    const speed=(sps[i]&&emax>emin)?(sps[i].est-emin)/(emax-emin):0.5;   // 0=예상 기록 가장 빠름
     return {gate:x.h.no,hrnm:x.h.hrnm,hrNo:x.h.hrNo,prob:x.prob,known:!!st,close,g1fT:st?st.g1fT:null,
       _s1f:early,_c2:early*0.75+turn*0.25,_c3:early*0.5+turn*0.5,_c4:turn,
-      _g1f:turn*0.4+close*0.3+(1-pn)*0.3,          // 코너를 돌아 직선: 4C 위치 + 막판 스피드 + 모델
-      _fin:(1-pn)*0.6+close*0.25+turn*0.15};});      // 결승: 모델 승률 + 막판 스피드 + 4C 위치
+      _g1f:turn*0.4+close*0.25+speed*0.1+(1-pn)*0.25,     // 코너를 돌아 직선: 4C 위치 + 막판 스피드 + 기록 + 모델
+      _fin:(1-pn)*0.5+close*0.2+speed*0.15+turn*0.15};});   // 결승: 모델 승률 + 막판 스피드 + 예상 기록 + 4C 위치
   const rank=(k,out)=>{rows.slice().sort((a,b)=>a[k]-b[k]||b.prob-a.prob).forEach((r,i)=>r[out]=i+1);};
   rank("_s1f","s1f"); if(has2C) rank("_c2","c2"); rank("_c3","c3"); rank("_c4","c4"); rank("_g1f","g1f"); rank("_fin","ord");
   return rows;
@@ -1461,6 +1471,24 @@ function paceFit(name){
   pace.filter(p=>p.hrnm===name&&p.ord>0).forEach(p=>{const rp=racePace(p.date,p.no); if(!rp) return; const f=paceFor(String(p.date).replace(/(\d{4})(\d{2})(\d{2})/,"$1/$2/$3"),p.no).length||10; out[rp.kind].push({ord:p.ord,pctl:1-(p.ord-1)/Math.max(f-1,1)});});
   const agg=a=>a.length?{n:a.length,avgFin:sum(a.map(x=>x.ord))/a.length,avgPctl:sum(a.map(x=>x.pctl))/a.length}:{n:0};
   return {fast:agg(out.fast),even:agg(out.even),slow:agg(out.slow)};
+}
+/* 거리별 기준 기록(par): 그 거리 우승 기록의 중앙값. 기록이 2건 미만인 거리는 가까운 거리에서 초당 속도로 환산 */
+let _par=null,_parN=0;
+function parTime(dist){
+  if(_parN!==results.length){ _parN=results.length; _par=new Map(); const by=new Map();
+    results.forEach(r=>{ if(r.gbn!=="R"||pos(r.chak)!==1) return; const t=secs(r.time); if(!t) return; if(!by.has(r.dist)) by.set(r.dist,[]); by.get(r.dist).push(t); });
+    by.forEach((v,d)=>{ if(v.length>=2){ v.sort((a,b)=>a-b); _par.set(d,v[Math.floor(v.length/2)]); } }); }
+  if(_par.has(dist)) return _par.get(dist);
+  const ds=[..._par.keys()]; if(!ds.length) return null; const near=ds.sort((a,b)=>Math.abs(a-dist)-Math.abs(b-dist))[0]; return _par.get(near)/near*dist;  // 초/미터 비례
+}
+const fmtT=t=>`${Math.floor(t/60)}:${(t%60).toFixed(1).padStart(4,"0")}`;
+/* 말의 스피드: 최근 5전 기록을 각 거리 par 대비 비율로 환산, 평균·최고 비율로 오늘 거리 예상 기록을 만든다 */
+function horseSpeed(name,dist){
+  const par=parTime(dist); if(!par) return null;
+  const rs=runHist(name).filter(r=>secs(r.time)&&parTime(r.dist)).slice(0,5); if(!rs.length) return null;
+  const ratios=rs.map(r=>secs(r.time)/parTime(r.dist)); const avg=sum(ratios)/ratios.length, best=Math.min(...ratios);
+  const same=rs.filter(r=>r.dist===dist).map(r=>secs(r.time)); const last=rs[0];
+  return {n:rs.length,avg,best,est:avg*par,estBest:best*par,par,sameBest:same.length?Math.min(...same):null,lastTime:secs(last.time),lastDist:last.dist,lastDate:last.date};
 }
 function chartStyle(st){
   const t=T[lang]; const W=520,H=70,L=70,R=70; const x=v=>L+v*(W-L-R);
