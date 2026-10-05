@@ -938,6 +938,15 @@ const secs=t=>{const m=String(t).match(/^(\d+):(\d+(?:\.\d+)?)$/);return m?+m[1]
 const pos=c=>{const n=parseInt(String(c).split("/")[0],10);return isNaN(n)?99:n;};
 const MARGIN={"코":["코 차이 (약 0.05마신)","nose"],"머리":["머리 차이 (약 0.1마신)","head"],"목":["목 차이 (약 0.25마신)","neck"],"출전제외":["출전 제외","scratched"]};
 function marginLabel(d){ if(!d||d==="-") return "–"; if(MARGIN[d]) return MARGIN[d][lang==="ko"?0:1]; return lang==="ko"?`${d}마신`:`${d} L`; }
+/* 경주성적 API는 하루 늦게 올라오는 경우가 있어, 당일에는 구간 기록 API(API4_3)의 착순·기록으로 결과 행을 만든다. */
+function resultsFromPace(){
+  const have=new Set(results.map(r=>`${r.date}|${r.no}`)); let n=0;
+  const byRace=new Map(); pace.forEach(p=>{if(!(p.ord>0)) return; const d=String(p.date).replace(/(\d{4})(\d{2})(\d{2})/,"$1/$2/$3"); const k=`${d}|${p.no}`; if(have.has(k)) return; if(!byRace.has(k)) byRace.set(k,[]); byRace.get(k).push({p,d});});
+  byRace.forEach((rows,k)=>{ const f=rows.length; rows.forEach(({p,d})=>{ const raw=p.raw||{}; const bw=String(raw.wgHr||"").match(/^(\d+)\(([+-]?\d+)\)/);
+    const t=+p.time||0, time=t?`${Math.floor(t/60)}:${(t%60).toFixed(1).padStart(4,"0")}`:"";
+    results.push(toRes([d,"R",p.no,raw.rcName||"",raw.rank||"",raw.budam||"",p.dist||raw.rcDist,raw.track||"",`${p.ord}/${f}`,"-",p.hrnm,raw.jkName||"",raw.wgBudam||"",bw?+bw[1]:(raw.wgHr||""),bw?+bw[2]:0,raw.rating||0,time,p.hrNo])); n++; }); });
+  return n;
+}
 function resGroups(){ const g=new Map(); results.forEach(r=>{const k=`${r.date}|${r.gbn}|${r.no}`; if(!g.has(k)) g.set(k,[]); g.get(k).push(r);});
   return [...g.entries()].sort((a,b)=>a[0]<b[0]?-1:1); }
 function renderResults(){
@@ -1317,7 +1326,7 @@ function renderStory(field){
 }
 
 /* ---- 전개(구간 통과 순위) ---- */
-const toPace=a=>({date:a[0],no:a[1],hrnm:a[2],hrNo:a[3],gate:a[4],ord:a[5],s1f:a[6],c2:a[7],c3:a[8],c4:a[9],g1f:a[10],time:a[11],win:a[12],plc:a[13],diff:a[14],bw:a[15],dist:a[16]});
+const toPace=a=>({date:a[0],no:a[1],hrnm:a[2],hrNo:a[3],gate:a[4],ord:a[5],s1f:a[6],c2:a[7],c3:a[8],c4:a[9],g1f:a[10],time:a[11],win:a[12],plc:a[13],diff:a[14],bw:a[15],dist:a[16],raw:a[17]});
 let pace=PACE_SAMPLE.map(toPace);
 const paceKey=(d,no)=>`${d}|${no}`;
 function paceFor(dateSlash,no){ const d=dateSlash.replace(/\//g,""); return pace.filter(p=>String(p.date)===d&&p.no==no); }
@@ -1411,7 +1420,7 @@ const ING={
   jockeys:it=>it.forEach(a=>jks.set(a.jkName,{n:+a.rcCntT,w:+a.ord1CntT,s:+a.ord2CntT,t:+a.ord3CntT,wr:+a.winRateTsum,qr:+a.quRateTsum})),
   trainers:it=>it.forEach(a=>trs.set(a.trName,{n:+a.rcCntT,w:+a.ord1CntT,s:+a.ord2CntT,t:+a.ord3CntT,wr:+a.winRateTsum,qr:+a.quRateTsum})),
   horses:it=>addInfo(it),
-  pace:it=>{const add=it.map(r=>toPace([r.rcDate,r.rcNo,r.hrName,r.hrNo,r.chulNo,r.ord,r.sjS1fOrd,r.sj_2cOrd,r.sj_3cOrd,r.sj_4cOrd,r.sjG1fOrd,r.rcTime,r.winOdds,r.plcOdds,String(r.diffUnit),r.wgHr,r.rcDist])); const keys=new Set(add.map(p=>`${p.date}|${p.no}`)); pace=pace.filter(p=>!keys.has(`${p.date}|${p.no}`)).concat(add);},
+  pace:it=>{const add=it.map(r=>toPace([r.rcDate,r.rcNo,r.hrName,r.hrNo,r.chulNo,r.ord,r.sjS1fOrd,r.sj_2cOrd,r.sj_3cOrd,r.sj_4cOrd,r.sjG1fOrd,r.rcTime,r.winOdds,r.plcOdds,String(r.diffUnit),r.wgHr,r.rcDist,{wgHr:r.wgHr,wgBudam:r.wgBudam,jkName:r.jkName,rank:r.rank,rcName:r.rcName,budam:r.budam,track:r.track,rating:r.rating,rcDist:r.rcDist}])); const keys=new Set(add.map(p=>`${p.date}|${p.no}`)); pace=pace.filter(p=>!keys.has(`${p.date}|${p.no}`)).concat(add);},
   sheet:it=>{const ds=sheetToDays(it); ds.forEach(putDay); useDay(pickDefaultDay());}
 };
 function kindOf(it){ const a=it[0]||{}; if("sjS1fOrd" in a) return "pace"; if("chulNo" in a&&"hrNameEn" in a) return "sheet";
@@ -1428,7 +1437,8 @@ function ingestText(raw){
   const j=JSON.parse(raw);
   if(j.bundle){
     const parts=[]; ["sheet","results","pace","jockeys","trainers","horses","races","reg","runs"].forEach(k=>{const it=j[k]; if(Array.isArray(it)&&it.length){ING[k](it); parts.push(`${t.bundleNames[k]} ${it.length}`);}});
-    if(!parts.length) throw 0; return t.loadedBundle(j.race_dt,parts.join(" · "));
+    if(!parts.length) throw 0;
+    const n=resultsFromPace(); if(n) parts.push((lang==="ko"?"구간 기록에서 결과 ":"results from sectionals ")+n); return t.loadedBundle(j.race_dt,parts.join(" · "));
   }
   const body=j?.response?.body; let it=body?.items?.item;
   if(body&&(!it||body.totalCount===0)) return {empty:true};
