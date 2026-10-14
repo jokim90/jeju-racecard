@@ -1285,6 +1285,19 @@ function enClauses(m){
   return {pos,neg};
 }
 function enJoin(a){ return a.length<=1?(a[0]||""):a.slice(0,-1).join(", ")+" and "+a[a.length-1]; }
+/* 목록 형식: 말 한 두의 영어 설명을 프리뷰 문체로 (순위에 따라 결론 표현) */
+function enHorse(m,i,gap){
+  const P=enPron(m), c=enClauses(m), jk=esc(pname(m.f.jk));
+  const verdict=i===0?((m.prob>=30&&gap>=10)?"is the one to beat":"can go close"):i===1?"looks the other key runner":i===2?"can be competitive":"rates as an each-way chance";
+  const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
+  let s=c.pos.length?cap(enJoin(c.pos.slice(0,2)))+".":"Brings solid all-round credentials.";
+  const also=c.pos[2]?`${P.He} ${c.pos[2].replace(/^(is|has|was|draws|tends|likes|returns|drops) /,(w,v)=>["is","has","was"].includes(v)?`${v} also `:`also ${v} `)}`:"";
+  if(c.neg.length) s+=` ${P.He} ${c.neg[0]}, but ${i===0?`with ${jk} aboard `:""}${P.he} ${verdict}.`;
+  else if(i===0) s+=` ${also?also+" and with":"With"} ${jk} aboard, ${P.he} ${verdict}.`;
+  else s+=` ${also?also+" and ":""}${also?P.he:P.He} ${verdict}.`;
+  const prev=m.prev.length?`<br><small class="prevline">${m.prev.length===1?"Last run":`Last ${m.prev.length} runs`}: ${m.prev.map(p=>`${ordEn(p.ord)} of ${p.fs}, ${p.dist}M (${enDate(p.date)})`).join("; ")}</small>`:"";
+  return s+prev;
+}
 function enComment(rows){
   const M=rows.map(x=>x.mdl).filter(Boolean); if(M.length<2) return "";
   const top=M.slice(0,4), next=M.slice(4,6), S=[];
@@ -1501,7 +1514,8 @@ function buildStory(field,race){
   if(first) p1+=ko?`우승 상금은 ₩${fmt(first)}(총 ₩${fmt(tot)}), 마주 · 조교사 · 기수가 나눕니다.`:`The winner's share is ₩${fmt(first)} of a ₩${fmt(tot)} ${glBtn("prize","purse")}.`;
   /* 2. 누가 앞서나 */
   const rows0=rankField(field,race), byModel=!!rows0.byModel, rows=rows0.sort((a,b)=>b.prob-a.prob), top=rows.slice(0,byModel?4:3);
-  const li=byModel?top.map(x=>`<li><span>${saddle(x.h.no)}</span><span>${chipBtn("horse",x.h.hrnm)} <b>${x.prob.toFixed(0)}%</b> — ${modelStory(x.mdl||{f:{},prev:[],pros:[],cons:[]},ko)}</span></li>`).join(""):top.map((x,i)=>{ const why=whyReasons(x,race);
+  const gap0=rows.length>1?rows[0].prob-rows[1].prob:99;
+  const li=byModel?top.map((x,i)=>`<li><span>${saddle(x.h.no)}</span><span>${chipBtn("horse",x.h.hrnm)} <b>${x.prob.toFixed(0)}%</b> — ${(!ko&&x.mdl)?enHorse(x.mdl,i,gap0):modelStory(x.mdl||{f:{},prev:[],pros:[],cons:[]},ko)}</span></li>`).join(""):top.map((x,i)=>{ const why=whyReasons(x,race);
     return `<li><span>${saddle(x.h.no)}</span><span>${chipBtn("horse",x.h.hrnm)} <b>${x.prob.toFixed(0)}%</b> — ${why.length?why.join(" · "):(ko?"두드러진 요소는 없지만 전반적으로 무난한 점수":"no single standout factor, solid across the board")}</span></li>`;}).join("");
   const gap=rows.length>1?rows[0].prob-rows[1].prob:99;
   const thin=byModel?rows.filter(x=>x.mdl&&x.mdl.f.starts<3).length:field.filter(h=>runHist(h.hrnm).length<3).length;
@@ -1567,7 +1581,7 @@ function buildStory(field,race){
       :`The model's top four are ${top.map(x=>`#${x.h.no}`).join(", ")}. It reads only the race card and past form, never the odds, so it can differ from the betting market.`):ko?`모델 상위는 ${top.map(x=>`#${x.h.no}`).join(" · ")}입니다. 반영된 최근 경주가 많지 않으니 ${glBtn("card","출전표")}와 함께 참고용으로 보세요.`
                  :`The model's top three are ${top.map(x=>`#${x.h.no}`).join(", ")}. It only sees a limited window of recent results, so use it alongside the ${glBtn("card","race card")} rather than on its own.`;
   return `<div class="story"><div><h4>${H[0]}</h4><p>${p1}</p></div>
-    <div><h4>${H[1]}</h4>${byModel&&!ko?`${enComment(rows)}<details class="why"><summary>Why each pick</summary><ul>${li}</ul></details>`:`<ul>${li}</ul>`}<p style="margin-top:8px">${p2}</p><p class="chnote" style="margin-top:6px">${wline}</p><details class="why"><summary>${T[lang].whyTitle}</summary><div class="whybody">${T[lang].whyBody}</div></details></div>
+    <div><h4>${H[1]}</h4><ul>${li}</ul><p style="margin-top:8px">${p2}</p><p class="chnote" style="margin-top:6px">${wline}</p><details class="why"><summary>${T[lang].whyTitle}</summary><div class="whybody">${T[lang].whyBody}</div></details></div>
     <div><h4>${H[2]}</h4><p>${p3}</p>
       ${field.length>=2?(()=>{const pr=predictRows(field,race), by=k=>pr.slice().sort((a,b)=>a[k]-b[k]), nm2=r=>`${saddle(r.gate)} ${chipBtn("horse",r.hrnm)}`;
         const e=by("s1f"), c=by("c4"), f=by("ord"); const lst=a=>a.map(nm2).join(", ");
