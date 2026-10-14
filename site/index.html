@@ -419,6 +419,10 @@ tr.grp.s-front td{border-left-color:#d3262b}tr.grp.s-stalk td{border-left-color:
 .predhead{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:baseline;margin-bottom:6px}
 .story .pred{max-width:none}
 .story .con{color:var(--muted)}
+.story .encomment{line-height:1.65}
+.story .seltbl{margin:10px 0 4px;border-collapse:collapse;font-size:13.5px}
+.story .seltbl th{font-weight:700;padding:3px 14px 3px 0;white-space:nowrap;border:none;vertical-align:top}
+.story .seltbl td{padding:3px 0;border:none;white-space:normal}
 .story .prevline{display:block;margin-top:3px;color:var(--muted);font-family:var(--mono);font-size:11.5px;line-height:1.5}
 .pred .pacetrack>.chnote{display:none}
 .flowtxt{margin-top:10px!important}
@@ -1242,6 +1246,65 @@ function rankField(field,race){
       const s=sum(raw.map(x=>x.prob)); raw.forEach(x=>x.prob=x.prob/s*100); raw.byModel=true; } }
   return raw;
 }
+/* ---- 영어 레이스 코멘트: 국제 중계 프리뷰 문체 (경주별 한 문단 + Selections / Next Best / Fast Start) ---- */
+const EN_ORD=n=>["","1st","2nd","3rd"][n]||ordEn(n);
+const EN_NUM=["zero","one","two","three","four","five","six","seven","eight","nine","ten","eleven","twelve"];
+const enNum=n=>EN_NUM[n]||String(n);
+const enDate=s=>`${MONTHS[+s.slice(4,6)-1]} ${ordEn(+s.slice(6))}`;
+function ecName(m){ return `(${m.no}) ${esc(dname(m.name,m.hrNo)).toUpperCase()}`; }
+function ecTitle(m){ return `(${m.no}) ${esc(dname(m.name,m.hrNo)).toLowerCase().replace(/\b[a-z]/g,c=>c.toUpperCase())}`; }
+function enPron(m){ const s=m.f.sex; return s==="암"?{he:"she",his:"her",him:"her",He:"She",His:"Her"}:{he:"he",his:"his",him:"him",He:"He",His:"His"}; }
+/* 말 한 두의 근거 구절 (사실만): pos = 장점, neg = 걸리는 점 */
+function enClauses(m){
+  const f=m.f, p=m.prev, P=enPron(m), pos=[], neg=[]; const last=p[0], two=p[1];
+  const D=x=>`${x}M`, sameTrip=x=>x&&x.dist===f.dist;
+  const fresh=f.fresh&&f.days?`returns from ${f.days>=55?`${enNum(Math.round(f.days/30))} months out`:`${enNum(Math.round(f.days/7))} weeks off`}`:null;
+  if(f.debut) pos.push(`makes ${P.his} race debut`);
+  else if(last){
+    if(fresh&&last.ord>3) pos.push(fresh);
+    if(last.ord===1&&two&&two.ord===1) pos.push(`comes off back-to-back wins, most recently ${sameTrip(last)?"at this distance":`over ${D(last.dist)}`} on ${enDate(last.date)}`);
+    else if(last.ord===1) pos.push(`won ${sameTrip(last)?"over course and distance":`over ${D(last.dist)}`} last time out on ${enDate(last.date)}`);
+    else if(last.ord<=3) pos.push(`ran ${EN_ORD(last.ord)} of ${enNum(last.fs)} ${sameTrip(last)?"over this distance":`over ${D(last.dist)}`} last start`);
+    else if(two&&two.ord===1) pos.push(`finished ${EN_ORD(last.ord)} last start but won two back`);
+    else if(two&&two.ord<=3) pos.push(`finished ${EN_ORD(last.ord)} last start but was ${EN_ORD(two.ord)} two back`);
+    else if(!(fresh&&last.ord>3)) neg.push(`was only ${EN_ORD(last.ord)} of ${enNum(last.fs)} last time out`);
+    if(fresh&&last.ord<=3) pos.push(fresh);
+  }
+  if(f.kick!=null&&f.kickRk===1&&f.kick>0) pos.push(`has been finishing off ${P.his} races better than anything else in this field`);
+  else if(f.kick!=null&&f.kickRk<=2&&f.kick>0.3) pos.push(`has been running on well late`);
+  if(f.distWins>0&&!(last&&last.ord===1&&sameTrip(last))) pos.push(f.distWins===1?`has won over this distance before`:`is a ${enNum(f.distWins)}-time winner over this distance`);
+  else if(!f.debut&&f.distRuns===0) neg.push(`tries ${D(f.dist)} for the first time`);
+  if(f.clsDrop>0) pos.push(`drops back in class`); else if(f.clsDrop<0) neg.push(`is up in class`);
+  if(f.wgChg) (f.wgChg<0?pos:neg).push(f.wgChg<0?`is down ${Math.abs(f.wgChg)}kg in weight`:`is up ${f.wgChg}kg in weight`);
+  if(!f.debut&&f.wins===0&&f.starts>=5) neg.push(`is still a maiden from ${enNum(f.starts)} starts`);
+  else if(!f.debut&&f.starts<=3) pos.push(`is lightly raced and open to improvement`);
+  if(f.style==="front"&&f.gate<=4) pos.push(`draws to hold a forward role`);
+  else if(f.style==="front") pos.push(`likes to be on the pace`);
+  else if(f.style==="closer") pos.push(`tends to do ${P.his} best work late`);
+  return {pos,neg};
+}
+function enJoin(a){ return a.length<=1?(a[0]||""):a.slice(0,-1).join(", ")+" and "+a[a.length-1]; }
+function enComment(rows){
+  const M=rows.map(x=>x.mdl).filter(Boolean); if(M.length<2) return "";
+  const top=M.slice(0,4), next=M.slice(4,6), S=[];
+  const gap=M[0].prob-(M[1]?M[1].prob:0);
+  { const m=top[0], P=enPron(m), c=enClauses(m); const verdict=(m.prob>=30&&gap>=10)?"is the one to beat":"can go close";
+    S.push(`${ecName(m)} ${enJoin(c.pos.slice(0,2))||"brings solid all-round credentials"}.`);
+    const extra=c.pos[2]?`${P.He} ${c.pos[2].replace(/^(is|has|was|draws|tends|likes|returns|drops) /,(w,v)=>["is","has","was"].includes(v)?`${v} also `:`also ${v} `)}`:"";
+    S.push(c.neg.length?`${P.He} ${enJoin(c.neg.slice(0,1))}, but with ${esc(pname(m.f.jk))} aboard ${P.he} ${verdict}.`:`${extra?extra+" and with":"With"} ${esc(pname(m.f.jk))} aboard, ${P.he} ${verdict}.`); }
+  if(top[1]){ const m=top[1], P=enPron(m), c=enClauses(m);
+    S.push(`${ecName(m)} ${enJoin(c.pos.slice(0,2))||"has solid credentials"}${c.neg[0]?` and while ${P.he} ${c.neg[0]}, ${P.he} looks the other key runner`:" and looks the other key runner"}.`); }
+  if(top[2]){ const a=top[2], ca=enClauses(a), P=enPron(a);
+    let s=`${ecName(a)} ${ca.pos[0]||ca.neg[0]||"has claims"}${ca.pos[1]?` and ${ca.pos[1]}`:""} so ${P.he} can be competitive`;
+    if(top[3]){ const b=top[3], cb=enClauses(b); s+=` whilst ${ecName(b)} ${cb.pos[0]||cb.neg[0]||"completes the shortlist"} and rates as an each-way chance`; }
+    S.push(s+"."); }
+  if(next.length) S.push(`${next.map(ecName).join(" and ")} ${next.length>1?"are":"is"} best of the rest.`);
+  const fast=M.filter(m=>m.f.style==="front"||m.f.style==="stalk").map(m=>m.no).sort((a,b)=>a-b);
+  const tbl=`<table class="seltbl"><tr><th>Selections</th><td>${top.map(ecTitle).join(" ")}</td></tr>
+    ${next.length?`<tr><th>Next Best</th><td>${next.map(m=>m.no).join(", ")}</td></tr>`:""}
+    ${fast.length?`<tr><th>Fast Start</th><td>${fast.join(", ")}</td></tr>`:""}</table>`;
+  return `<p class="encomment">${S.join(" ")}</p>${tbl}`;
+}
 /* ---- 출마표 모형(배당 미사용): 수집 때 계산해 latest.json의 model에 들어 있는 값 ---- */
 let MODEL=null;
 function modelRace(no){ if(!MODEL||!curDay) return null; const v=MODEL.races[`${curDay}|${+no}`]; return v&&v.length?v:null; }
@@ -1502,7 +1565,7 @@ function buildStory(field,race){
       :`The model's top four are ${top.map(x=>`#${x.h.no}`).join(", ")}. It reads only the race card and past form, never the odds, so it can differ from the betting market.`):ko?`모델 상위는 ${top.map(x=>`#${x.h.no}`).join(" · ")}입니다. 반영된 최근 경주가 많지 않으니 ${glBtn("card","출전표")}와 함께 참고용으로 보세요.`
                  :`The model's top three are ${top.map(x=>`#${x.h.no}`).join(", ")}. It only sees a limited window of recent results, so use it alongside the ${glBtn("card","race card")} rather than on its own.`;
   return `<div class="story"><div><h4>${H[0]}</h4><p>${p1}</p></div>
-    <div><h4>${H[1]}</h4><ul>${li}</ul><p style="margin-top:8px">${p2}</p><p class="chnote" style="margin-top:6px">${wline}</p><details class="why"><summary>${T[lang].whyTitle}</summary><div class="whybody">${T[lang].whyBody}</div></details></div>
+    <div><h4>${H[1]}</h4>${byModel&&!ko?`${enComment(rows)}<details class="why"><summary>Why each pick</summary><ul>${li}</ul></details>`:`<ul>${li}</ul>`}<p style="margin-top:8px">${p2}</p><p class="chnote" style="margin-top:6px">${wline}</p><details class="why"><summary>${T[lang].whyTitle}</summary><div class="whybody">${T[lang].whyBody}</div></details></div>
     <div><h4>${H[2]}</h4><p>${p3}</p>
       ${field.length>=2?(()=>{const pr=predictRows(field,race), by=k=>pr.slice().sort((a,b)=>a[k]-b[k]), nm2=r=>`${saddle(r.gate)} ${chipBtn("horse",r.hrnm)}`;
         const e=by("s1f"), c=by("c4"), f=by("ord"); const lst=a=>a.map(nm2).join(", ");

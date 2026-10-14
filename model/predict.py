@@ -78,6 +78,10 @@ def main(path):
             ph = ph[ph.date < x.date].tail(3).iloc[::-1]
             prev = [{"date": p.date.strftime("%Y%m%d"), "dist": int(p.dist), "ord": int(p.ordn), "fs": int(p.fs),
                      "fig": r1(p.fig, 0), "kick": r1(p.fin_speed), "early": r1(p.early_pct, 2)} for p in ph.itertuples()]
+        allp = hist_by_horse.get_group(x.hrNo) if x.hrNo in hist_by_horse.groups else None
+        allp = allp[allp.date < x.date] if allp is not None else None
+        dist_runs = int((allp.dist == x.dist).sum()) if allp is not None else 0
+        dist_wins = int(((allp.dist == x.dist) & (allp.ordn == 1)).sum()) if allp is not None else 0
         e = x.early_avg3
         style = None if pd.isna(e) else ("front" if e <= 0.2 else "stalk" if e <= 0.45 else "mid" if e <= 0.75 else "closer")
         key = f"{x.date.strftime('%Y%m%d')}|{int(x.rcNo_i)}"
@@ -91,7 +95,7 @@ def main(path):
                   "jk": x.jkName, "jkRate": r1(x.jk_rate * 100), "jkRk": r1(x.jk_rk, 0), "tr": x.trName, "trRate": r1(x.tr_rate * 100),
                   "distFit": r1(x.dist_fit, 0), "clsDrop": r1(x.cls_drop, 0), "wgt": r1(x.wgBudam), "wgChg": r1(x.wg_chg),
                   "sire": None if pd.isna(x.fhrNm) or x.fhrNm == "-" else x.fhrNm, "sireRate": r1(x.sire_rate * 100),
-                  "age": r1(x.age, 0), "gate": int(x.chulNo), "field": int(x.fs), "work14": r1(x.trm14 / 60, 0), "workRk": r1(x.work_rk, 0)}})
+                  "age": r1(x.age, 0), "sex": None if pd.isna(x.get("sex")) else x.get("sex"), "distRuns": dist_runs, "distWins": dist_wins, "dist": int(x.dist), "gate": int(x.chulNo), "field": int(x.fs), "work14": r1(x.trm14 / 60, 0), "workRk": r1(x.work_rk, 0)}})
     for v in races.values():
         v.sort(key=lambda a: a["rank"])
     bundle["model"] = {"version": 1, "trained_through": coef["trained_through"], "validation": coef["validation"],
