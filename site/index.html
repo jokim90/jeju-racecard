@@ -653,7 +653,7 @@ const T = {
   recAllL:"Career record",rec1yL:"Last 12 months",fromEntries:"From entry data",
   vetTitle:"Recent vet records",vetNone:"No recent vet records.",
   equipLine:(e,b)=>`Equipment: ${e.length?e.join(", "):"none"} · Recent bleeding: ${b.length?b.join(", "):"none"}`,
-  runText:(h,wr,n,rt,hc)=>`Ridden by ${pname(h.jck)} from saddle no. ${h.no}, carrying ${h.wgt}kg${wr?`, the #${wr} heaviest of ${n}`:", the same weight as every runner"}.${!hc?"":wr<=3?" The handicapper rates it among the strongest in the race.":wr>n-3?" It runs with a light-weight advantage.":" A mid-range assessment."} Career: ${h.recAll[0]} starts, ${h.recAll[1]} wins.`,
+  runText:(h,wr,n,rt,hc)=>`Ridden by ${pname(h.jck)} from saddle no. ${h.no}, carrying ${h.wgt}kg${wr?`, the #${wr} heaviest of ${n}`:", the same weight as every runner"}.${!hc?"":wr<=3?` The handicapper rates ${heShe(h.gndr).him} among the strongest in the race.`:wr>n-3?` ${heShe(h.gndr).He} runs with a light-weight advantage.`:" A mid-range assessment."} Career: ${h.recAll[0]} starts, ${h.recAll[1]} wins.`,
   started:"Started",
   entries:"Entries",regVs:(a,b)=>`${a} entered → ${b} start`,
   regNote:"Entries close one to two weeks before the race. When more horses enter than the field allows, the final field is set by rating and racing-interval rules. Horses marked 'Started' made the final field.",
@@ -663,7 +663,7 @@ const T = {
   pRating:"Rating",pRank:(i,n)=>`#${i} of ${n} entries`,p6m:"Last 6 months",p1y:"Last 12 months",pCareer:"Career earnings",
   pTrainer:"Trainer",pOwner:"Owner",pOrigin:"Bred in",origin:{"한":"Korea"},outside:"'외부마' marks a horse trained outside the Jeju racecourse stables.",
   pText:(h,rk,n,band)=>`A ${h.ag}-year-old ${({"수":"colt/horse","암":"filly/mare","거":"gelding"})[h.gndr]||""} rated ${h.ratg}, ranked ${rk} of ${n} entries.${band}`,
-  bandIn:" Inside the race's rating band.", bandOut:" Outside the race's rating band, so check whether it actually starts.",
+  bandIn:" Inside the race's rating band.", bandOut:" Outside the race's rating band, so check whether this runner actually starts.",
   won:"KRW",man:v=>v>=1e6?`₩${(v/1e6).toFixed(1)}M`:`₩${v.toLocaleString("en-US")}`,
   loadedReg:n=>`Loaded ${n} entries.`,loadedRun:n=>`Loaded ${n} runners.`,loadedRes:n=>`Loaded ${n} result rows.`,
  }
@@ -1240,7 +1240,7 @@ function rankField(field,race){
   raw.forEach(x=>{x.n=Object.fromEntries(FACTORS.map(([k])=>[k,fns[k](x.f[k])])); x.score=sum(FACTORS.map(([k,w])=>x.n[k]*w))/sum(FACTORS.map(f=>f[1])); x.a=absFactors(x);});
   const ex=raw.map(x=>Math.exp(4*x.score)), es=sum(ex); raw.forEach((x,i)=>x.prob=ex[i]/es*100);
   const mr=modelRace(race.raceNo);
-  if(mr){ raw.forEach(x=>{x.mdl=mr.find(a=>a.no==x.h.no)||null;});
+  if(mr){ raw.forEach(x=>{x.mdl=mr.find(a=>a.no==x.h.no)||null; if(x.mdl&&!x.mdl.f.sex) x.mdl.f.sex=x.h.gndr;});
     const got=raw.filter(x=>x.mdl); if(got.length>=Math.max(2,raw.length-2)){
       const lo=Math.min(...got.map(x=>x.mdl.prob)); raw.forEach(x=>x.prob=x.mdl?x.mdl.prob:lo/2);
       const s=sum(raw.map(x=>x.prob)); raw.forEach(x=>x.prob=x.prob/s*100); raw.byModel=true; } }
@@ -1253,7 +1253,8 @@ const enNum=n=>EN_NUM[n]||String(n);
 const enDate=s=>`${MONTHS[+s.slice(4,6)-1]} ${ordEn(+s.slice(6))}`;
 function ecName(m){ return `(${m.no}) ${esc(dname(m.name,m.hrNo)).toUpperCase()}`; }
 function ecTitle(m){ return `(${m.no}) ${esc(dname(m.name,m.hrNo)).toLowerCase().replace(/\b[a-z]/g,c=>c.toUpperCase())}`; }
-function enPron(m){ const s=m.f.sex; return s==="암"?{he:"she",his:"her",him:"her",He:"She",His:"Her"}:{he:"he",his:"his",him:"him",He:"He",His:"His"}; }
+const heShe=g=>g==="암"?{he:"she",his:"her",him:"her",He:"She",His:"Her"}:{he:"he",his:"his",him:"him",He:"He",His:"His"};  /* 암=filly·mare → she, 수·거=colt·horse·gelding → he */
+function enPron(m){ return heShe(m.f.sex); }
 /* 말 한 두의 근거 구절 (사실만): pos = 장점, neg = 걸리는 점 */
 function enClauses(m){
   const f=m.f, p=m.prev, P=enPron(m), pos=[], neg=[]; const last=p[0], two=p[1];
@@ -1359,6 +1360,7 @@ function modelStory(m,ko){
   let out=P.join(" ");
   if(!out) out=ko?"한 가지가 두드러지기보다 여러 항목이 고르게 좋습니다.":"No single standout, but solid across the board.";
   if(C.length) out+=ko?` <span class="con">걸리는 점: ${C.join(", ")}.</span>`:` <span class="con">Against it: ${C.join("; ")}.</span>`;
+  if(!ko){ const p=heShe(f.sex); out=out.replace(/Against it:/g,`Against ${p.him}:`).replace(/\bIts\b/g,p.His).replace(/\bIt\b/g,p.He).replace(/\bits\b/g,p.his).replace(/\bit\b/g,p.he); }
   if(prevTxt) out+=`<br><small class="prevline">${prevTxt}</small>`;
   return out;
 }
