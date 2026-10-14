@@ -58,12 +58,23 @@ jobs:
           print("latest.json 교체:", {k: len(v) for k, v in j.items() if isinstance(v, list)})
           EOF
 
+      - name: 모형 이력 갱신과 출마표 분석 (배당 미사용)
+        if: github.event_name != 'push'
+        env:
+          JEJU_API_KEY: ${{ secrets.JEJU_API_KEY }}
+        run: |
+          pip install --quiet pandas numpy
+          DT="${{ github.event.inputs.race_dt }}"
+          [ -z "$DT" ] && DT=$(date +%Y%m%d)
+          python model/update_history.py "$DT" || echo "::warning::이력 갱신 실패, 기존 이력으로 예측합니다."
+          python model/predict.py site/latest.json || echo "::warning::모형 예측 실패, 레이스카드는 기본 모형을 씁니다."
+
       - name: latest.json 저장소에 기록
         if: github.event_name != 'push'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add site/latest.json
+          git add site/latest.json model/history/
           git diff --cached --quiet || git commit -m "데이터 갱신 $(date '+%Y-%m-%d %H:%M')"
           git pull --rebase origin main
           git push
