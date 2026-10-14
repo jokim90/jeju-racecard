@@ -1515,8 +1515,8 @@ function buildStory(field,race){
   /* 2. 누가 앞서나 */
   const rows0=rankField(field,race), byModel=!!rows0.byModel, rows=rows0.sort((a,b)=>b.prob-a.prob), top=rows.slice(0,byModel?4:3);
   const gap0=rows.length>1?rows[0].prob-rows[1].prob:99;
-  const li=byModel?top.map((x,i)=>`<li><span>${saddle(x.h.no)}</span><span>${chipBtn("horse",x.h.hrnm)} <b>${x.prob.toFixed(0)}%</b> — ${(!ko&&x.mdl)?enHorse(x.mdl,i,gap0):modelStory(x.mdl||{f:{},prev:[],pros:[],cons:[]},ko)}</span></li>`).join(""):top.map((x,i)=>{ const why=whyReasons(x,race);
-    return `<li><span>${saddle(x.h.no)}</span><span>${chipBtn("horse",x.h.hrnm)} <b>${x.prob.toFixed(0)}%</b> — ${why.length?why.join(" · "):(ko?"두드러진 요소는 없지만 전반적으로 무난한 점수":"no single standout factor, solid across the board")}</span></li>`;}).join("");
+  const li=byModel?top.map((x,i)=>`<li><span>${saddle(x.h.no)}</span><span>${chipBtn("horse",x.h.hrnm)} — ${(!ko&&x.mdl)?enHorse(x.mdl,i,gap0):modelStory(x.mdl||{f:{},prev:[],pros:[],cons:[]},ko)}</span></li>`).join(""):top.map((x,i)=>{ const why=whyReasons(x,race);
+    return `<li><span>${saddle(x.h.no)}</span><span>${chipBtn("horse",x.h.hrnm)} — ${why.length?why.join(" · "):(ko?"두드러진 요소는 없지만 전반적으로 무난한 점수":"no single standout factor, solid across the board")}</span></li>`;}).join("");
   const gap=rows.length>1?rows[0].prob-rows[1].prob:99;
   const thin=byModel?rows.filter(x=>x.mdl&&x.mdl.f.starts<3).length:field.filter(h=>runHist(h.hrnm).length<3).length;
   const mostThin=thin>=Math.ceil(n/2);
