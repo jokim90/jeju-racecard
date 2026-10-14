@@ -36,6 +36,16 @@ def main(path):
     w = np.array(coef["coef"]); assert coef["cols"] == M.COLS, "coef.json과 피처 목록이 다릅니다. train.py를 다시 실행하세요."
 
     hist = M.load_history()
+    # 안전장치: 수집기가 매일 받는 구간 기록(latest.json의 pace, API4_3)을 이력에 합친다.
+    # update_history.py가 실패해도 최근 경주가 빠져 '휴양 복귀' 같은 틀린 판단이 나오지 않게 한다.
+    pace = pd.DataFrame(bundle.get("pace") or [])
+    if not pace.empty and "ord" in pace:
+        pace = pace[pd.to_numeric(pace.ord, errors="coerce").fillna(0) > 0]
+        pace = pace[[c for c in hist.columns if c in pace.columns]].astype(str)
+        before = len(hist)
+        hist = pd.concat([hist, pace], ignore_index=True).drop_duplicates(["rcDate", "rcNo", "chulNo"], keep="first")
+        print(f"구간 기록에서 이력 보강: {len(hist) - before}건")
+    last_hist = hist.rcDate.astype(str).max()
     hist_keys = set(zip(hist.rcDate.astype(str), hist.rcNo.astype(str)))
     srows = M.sheet_rows(sheet)
     new = srows[~srows.apply(lambda x: (x.rcDate, x.rcNo) in hist_keys, axis=1)]
@@ -98,7 +108,11 @@ def main(path):
                   "age": r1(x.age, 0), "sex": None if pd.isna(x.get("sex")) else x.get("sex"), "distRuns": dist_runs, "distWins": dist_wins, "dist": int(x.dist), "gate": int(x.chulNo), "field": int(x.fs), "work14": r1(x.trm14 / 60, 0), "workRk": r1(x.work_rk, 0)}})
     for v in races.values():
         v.sort(key=lambda a: a["rank"])
-    bundle["model"] = {"version": 1, "trained_through": coef["trained_through"], "validation": coef["validation"],
+    stale = [k for k in races if k.split("|")[0] > last_hist and
+             (pd.Timestamp(k.split("|")[0]) - pd.Timestamp(last_hist)).days > 10]
+    if stale:
+        print(f"주의: 이력 마지막 날({last_hist})이 예측 경주보다 10일 넘게 앞섭니다. 최근 경주가 빠졌을 수 있습니다.")
+    bundle["model"] = {"version": 1, "history_through": last_hist, "stale": bool(stale), "trained_through": coef["trained_through"], "validation": coef["validation"],
                        "built": time.strftime("%Y-%m-%d %H:%M"), "races": races}
     Path(path).write_text(json.dumps(bundle, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     print(f"모형 예측: {len(races)}경주, {sum(len(v) for v in races.values())}두 ({time.time()-t0:.0f}초)")
