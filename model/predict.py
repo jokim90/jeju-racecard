@@ -16,9 +16,9 @@ LABEL = {  # 근거 키 (화면에서 한국어·영어 문장으로 바꾼다)
     "fig_last_z": "fig_last", "fig_avg3_z": "fig_avg3", "fig_best5_z": "fig_best", "fin_speed_avg3_z": "kick",
     "jk_rate_z": "jockey", "tr_rate_z": "trainer", "first_up": "fresh", "debut": "debut", "lnprev_z": "unexposed",
     "gate_z": "gate", "dist_fit_z": "distance", "early_avg3_z": "early", "place_rate_z": "consistency",
-    "pct_last_z": "last_run", "win_prev_z": "wins", "sire_rate_z": "sire", "cls_drop_z": "class", "wg_chg_z": "weight_chg",
+    "pct_last_z": "last_run", "win_prev_z": "wins", "cls_drop_z": "class", "wg_chg_z": "weight_chg",
     "wgBudam_z": "weight", "rating_z": "rating", "age_z": "age", "age_z2": "age", "tr14_z": "work", "trm14_z": "work",
-    "tr30_z": "work", "trm30_z": "work", "ldays_z": "layoff", "small": "breed",
+    "tr30_z": "work", "trm30_z": "work", "ldays_z": "layoff", 
 }
 
 
@@ -104,7 +104,6 @@ def main(path):
                   "starts": int(x.n_prev), "wins": int(x.win_prev), "placeRate": r1(x.place_rate * 100, 0) if x.n_prev >= 3 else None,
                   "jk": x.jkName, "jkRate": r1(x.jk_rate * 100), "jkRk": r1(x.jk_rk, 0), "tr": x.trName, "trRate": r1(x.tr_rate * 100),
                   "distFit": r1(x.dist_fit, 0), "clsDrop": r1(x.cls_drop, 0), "wgt": r1(x.wgBudam), "wgChg": r1(x.wg_chg),
-                  "sire": None if pd.isna(x.fhrNm) or x.fhrNm == "-" else x.fhrNm, "sireRate": r1(x.sire_rate * 100),
                   "age": r1(x.age, 0), "sex": None if pd.isna(x.get("sex")) else x.get("sex"), "distRuns": dist_runs, "distWins": dist_wins, "dist": int(x.dist), "gate": int(x.chulNo), "field": int(x.fs), "work14": r1(x.trm14 / 60, 0), "workRk": r1(x.work_rk, 0)}})
     for v in races.values():
         v.sort(key=lambda a: a["rank"])

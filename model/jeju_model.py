@@ -20,8 +20,8 @@ COEF = HERE / "coef.json"
 
 Z_FEATS = ["fig_last", "fig_avg3", "fig_best5", "early_avg3", "fin_speed_avg3", "jk_rate", "tr_rate", "wgBudam",
            "rating", "lnprev", "ldays", "win_prev", "place_rate", "pct_last", "cls_drop", "wg_chg", "dist_fit",
-           "sire_rate", "age", "gate", "tr14", "trm14", "tr30", "trm30"]
-RAW_FEATS = ["age_z2", "debut", "first_up", "small"]
+           "age", "gate", "tr14", "trm14", "tr30", "trm30"]
+RAW_FEATS = ["age_z2", "debut", "first_up"]
 COLS = [c + "_z" for c in Z_FEATS] + RAW_FEATS
 
 num = lambda s: pd.to_numeric(s, errors="coerce")
@@ -153,11 +153,9 @@ def build(results: pd.DataFrame, horses: pd.DataFrame, training: pd.DataFrame) -
     jk = prior_rate("jkNo", 50); r["jk_rate"] = jk.rate.fillna(base_rate).values; r["jk_starts"] = jk.starts.values
     tr = prior_rate("trNo", 50); r["tr_rate"] = tr.rate.fillna(base_rate).values
     H = horses.copy(); H["hrNo"] = _str7(H.hrNo)
-    r = r.merge(H[["hrNo", "breed", "birthDt", "fhrNo", "fhrNm"]].drop_duplicates("hrNo"), on="hrNo", how="left")
-    sr = prior_rate("fhrNo", 100); r["sire_rate"] = sr.rate.fillna(base_rate).values
+    r = r.merge(H[["hrNo", "birthDt"]].drop_duplicates("hrNo"), on="hrNo", how="left")
     r["age"] = (r.date - pd.to_datetime(r.birthDt, format="%Y%m%d", errors="coerce")).dt.days / 365.25
     r["age"] = r.age.fillna(r.age_given)
-    r["small"] = (r.breed == "소형마").astype(float)
     r["gate"] = r.chulNo / r.fs
 
     # 일일 훈련: 경주 전 14일·30일 횟수와 시간(분)
