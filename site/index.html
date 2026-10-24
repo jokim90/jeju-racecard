@@ -446,7 +446,7 @@ tr.grp.s-front td{border-left-color:#d3262b}tr.grp.s-stalk td{border-left-color:
   <button type="button" class="burger" id="burger" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
   <div class="navr" id="navr">
     <div class="navtabs" id="navtabs">
-      <a href="#/card" data-r="card"></a><a href="#/results" data-r="results"></a><a href="#/model" data-r="model"></a><a href="#/101" data-r="101"></a>
+      <a href="#/card" data-r="card"></a><a href="#/results" data-r="results"></a><a href="#/101" data-r="101"></a>
     </div>
     <div class="lang" role="group" aria-label="Language">
       <button type="button" id="lang-ko" aria-pressed="false">한국어</button>
@@ -772,7 +772,7 @@ function renderModelPage(){
 }
 
 /* ---- 화면 전환(홈 / 레이스카드 / 결과 / 101) ---- */
-const ROUTES=["card","results","101"]; const NAVR=["card","results","model","101"];
+const ROUTES=["card","results","101"]; const NAVR=["card","results","101"]; /* '모델 성적' 페이지(#/model)는 2026-10 비공개 전환: 메뉴에서 빼고 홈으로 돌려보냄. renderModelPage()는 남겨둠. */
 function curRoute(){ const h=location.hash.replace(/^#\/?/,"").split("/")[0]; return NAVR.includes(h)?h:"home"; }
 function route(){
   const r=curRoute(); $("home").hidden=r!=="home"; document.querySelector(".wrap").hidden=r==="home"; $("pgCard").hidden=r!=="card"; $("pgResults").hidden=r!=="results"; $("p101").hidden=r!=="101"; $("pgModel").hidden=r!=="model"; if(r==="model") renderModelPage();
