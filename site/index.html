@@ -433,6 +433,7 @@ tr.grp.s-front td{border-left-color:#d3262b}tr.grp.s-stalk td{border-left-color:
 .mblock{display:grid;gap:10px}
 .mtbl tr.hit td{background:color-mix(in srgb,#2e8b57 12%,transparent)}
 .mtbl tr.near td{background:color-mix(in srgb,#e0ab2a 14%,transparent)}
+.trtbl{min-width:0;font-size:13px}.trtbl tr.ng td{color:var(--muted)}.trtbl tr.ng td b{color:#b3261e}
 </style>
 
 <nav class="topnav" aria-label="Main">
@@ -539,7 +540,7 @@ const T = {
   born:"출생",debut:"데뷔",sire:"부마",dam:"모마",damsire:"외조부",career:"통산 전적",winPct:"승률",top2:"복승률",avgWin:"평균 우승거리",
   hasInfo:"마필정보",infoHint:"'마필정보' 표시가 있는 말을 누르면 혈통과 통산 성적이 열립니다. 마필종합정보 API 응답(XML)을 아래 칸에 붙여넣으면 더 많은 말에 붙습니다.",
   infoSrc:"출처: 마필종합정보 API (API42_1)",loadedInfo:n=>`마필정보 ${n}두를 불러왔습니다.`,
-  fileBtn:"파일 불러오기",bundleNames:{pace:"구간기록",sheet:"출전표",races:"경주",reg:"등록마",runs:"출전마",results:"결과",jockeys:"기수",trainers:"조교사",horses:"마필정보"},
+  fileBtn:"파일 불러오기",bundleNames:{trial:"주행심사",pace:"구간기록",sheet:"출전표",races:"경주",reg:"등록마",runs:"출전마",results:"결과",jockeys:"기수",trainers:"조교사",horses:"마필정보"},
   loadedBundle:(d,p)=>`${d} 묶음을 불러왔습니다: ${p}`,
   tba:"발표 전",srcSheet:"출전표 API (API26_2) 기준",archive:"예시",prizeCond:"상금 조건",prizeWhy:"말의 수득상금으로 등급을 나눕니다. 이 금액 미만을 번 말만 출전할 수 있습니다.",
   wEqual:"모든 말이 같은 중량",finished:"실제 착순",fromSheet:"출전표 기준",
@@ -556,7 +557,7 @@ const T = {
 <p><b>다음 단계.</b> 레이팅 차이, 해당 거리 실제 승률처럼 절대 기준으로 먼저 점수를 매긴 뒤 경주 안에서 승률로 바꾸면 격차 크기가 살아납니다. 결과가 쌓이면 가중치를 손으로 정하는 대신 실제 결과에 맞춰 학습시킬 수 있습니다. 지금 버전은 그 전 단계의 참고용 모델입니다.</p>`,
   paceTitle:"전개 (구간 통과 순위)",finish:"결승",others:"4착 이하",paceNote:"S1F는 출발 후 첫 200m 지점, 2C~4C는 코너 통과, G1F는 결승 200m 전 순위입니다. 선에 마우스를 올리면 말별 통과 순위가 나옵니다. 결승선 옆 @는 단승 배당입니다.",
   styleTitle:"주행 스타일",styles:{front:"선행",stalk:"선입",mid:"중단",closer:"추입",none:"기록 없음"},styleDesc:{front:"S1F·첫 코너에서 선두권, 4C까지 앞자리를 지키는 말",stalk:"초반 선두 바로 뒤(상위 45% 안)에서 따라가는 말",mid:"초반 중위권, 또는 뒤에서 4C까지 중위권으로 전진하는 말",closer:"초반 후미(하위 25%)에서 4C까지도 뒤에 있다가 직선에서 추입하는 말",none:"구간 통과 순위 기록이 아직 없는 말(신마 등)"},styleHow:"포지션은 최근 경주들의 S1F(출발 직후)와 첫 코너(2C, 없으면 3C) 통과 순위를 출전 두수로 나눠 평균한 값입니다. 상위 15% 선행, 40%까지 선입, 70%까지 중단, 그 뒤는 추입.",byStyle:"포지션별",byGate:"마번순",styleCol:"포지션",styleBasis:n=>`최근 ${n}전 · S1F와 첫 코너 통과 순위 평균`,lead:"선두",back:"후미",earlyAvg:"초반 평균",earlyPos:"S1F 통과 순위",finishPos:"결승 착순",
-  styleNote:"각 선은 한 경주입니다. 왼쪽 점이 초반(S1F) 위치, 오른쪽 점이 결승 착순이며 경주 내 순위를 0(선두)~100(후미)으로 바꾼 값입니다.",loadedPace:n=>`구간 기록 ${n}건을 불러왔습니다.`,
+  loadedTrial:n=>`주행심사 기록 ${n}건을 불러왔습니다.`,styleNote:"각 선은 한 경주입니다. 왼쪽 점이 초반(S1F) 위치, 오른쪽 점이 결승 착순이며 경주 내 순위를 0(선두)~100(후미)으로 바꾼 값입니다.",loadedPace:n=>`구간 기록 ${n}건을 불러왔습니다.`,
   others2:"2착 이하",
   gateColors:"색 = 마번",ring:"테두리",
   trackName:"렛츠런파크 제주 · 1,610m",orderAt:"지점 통과 순서",play:"▶ 재생",pause:"■ 정지",paceLines:"선 그래프로 보기",
@@ -614,7 +615,7 @@ const T = {
   born:"Foaled",debut:"Debut",sire:"Sire",dam:"Dam",damsire:"damsire",career:"Career",winPct:"Win rate",top2:"Top-2",avgWin:"Avg. winning distance",
   hasInfo:"Profile",infoHint:"Tap a horse tagged 'Profile' to open its pedigree and career record. Paste horse-info API responses (XML) below to add more horses; their official English names then appear throughout.",
   infoSrc:"Source: KRA horse information API (API42_1)",loadedInfo:n=>`Loaded ${n} horse profiles.`,
-  fileBtn:"Open file",bundleNames:{pace:"sectionals",sheet:"entry sheet",races:"races",reg:"entries",runs:"runners",results:"results",jockeys:"jockeys",trainers:"trainers",horses:"horse profiles"},
+  fileBtn:"Open file",bundleNames:{trial:"trials",pace:"sectionals",sheet:"entry sheet",races:"races",reg:"entries",runs:"runners",results:"results",jockeys:"jockeys",trainers:"trainers",horses:"horse profiles"},
   loadedBundle:(d,p)=>`Loaded bundle for ${d}: ${p}`,
   tba:"TBA",srcSheet:"From the entry sheet API (API26_2)",archive:"sample",prizeCond:"Earnings limit",prizeWhy:"Races are graded by career prize money; only horses under this figure may enter.",
   wEqual:"All runners carry the same weight",finished:"Actual finish",fromSheet:"From the entry sheet",
@@ -631,7 +632,7 @@ const T = {
 <p><b>Next step.</b> Score factors on an absolute basis first (rating differences, actual win rate at the distance) and only then convert to a within-race percentage, so gap size survives. Once enough results accumulate, the weights can be fitted to outcomes instead of set by hand. This version is the reference model before that step.</p>`,
   paceTitle:"Pace (position at each call)",finish:"Finish",others:"4th or worse",paceNote:"S1F is 200m after the start, 2C–4C are the turns, G1F is 200m from home. Hover a line for that horse's calls. @ beside the finish is the win dividend (SP).",
   styleTitle:"Running style",styles:{front:"Front runner",stalk:"On pace",mid:"Stalker",closer:"Closer",none:"No data"},styleDesc:{front:"In the first group at S1F and the first corner, and still in front at the 4C",stalk:"Sits just behind the leaders early (top 45%)",mid:"Midfield early, or comes from the back into midfield by the 4C",closer:"Rear early (bottom 25%) and still behind at the 4C, finishing in the straight",none:"No sectional records yet (e.g. debutants)"},styleHow:"Position is the average of each recent run's S1F (just after the start) and first-corner (2C, or 3C if none) placings, scaled by field size. Top 15% = front runner, to 40% on pace, to 70% stalker, beyond that closer.",byStyle:"By position",byGate:"By gate",styleCol:"Position",styleBasis:n=>`last ${n} runs · average of S1F and first-corner positions`,lead:"Lead",back:"Rear",earlyAvg:"Early avg",earlyPos:"Position at S1F",finishPos:"Finish",
-  styleNote:"Each line is one run: the left dot is the early (S1F) position, the right dot the finish, both scaled 0 (lead) to 100 (rear) within the field.",loadedPace:n=>`Loaded ${n} sectional rows.`,
+  loadedTrial:n=>`Loaded ${n} qualifying-trial records.`,styleNote:"Each line is one run: the left dot is the early (S1F) position, the right dot the finish, both scaled 0 (lead) to 100 (rear) within the field.",loadedPace:n=>`Loaded ${n} sectional rows.`,
   others2:"2nd or worse",
   gateColors:"colour = gate",ring:"ring",
   trackName:"LetsRun Park Jeju · 1,610m",orderAt:"order at this call",play:"▶ Play",pause:"■ Stop",paceLines:"Show as line chart",
@@ -1167,7 +1168,11 @@ function drawerHorse(name){
   const tiles=statTiles([[t.career,`${rec[1]}-${rec[2]}-${rec[3]}`,lang==="ko"?`${rec[0]}전`:`${rec[0]} starts`],[t.winPct,`${pct(rec[1],rec[0])}%`,`${t.top3} ${pct(rec[1]+rec[2]+rec[3],rec[0])}%`],
     [t.p1y,t.man(h?h.e1y:0)],[t.pCareer,t.man(h?h.career:+(info?.amt||0))],...(info&&+info.avgWinDist?[[t.avgWin,`${info.avgWinDist}m`]]:[]),...(rs.length?[[t.lastRun,`${daysBetween(rs[0].date,cutDate())}${lang==="ko"?"일 전":" days ago"}`,rs[0].date.slice(5).replace("/",".")]]:[])]);
   const st=styleOf(name);
-  return head+`<section><h3>${t.chForm}</h3>${chartForm(rs)}</section>`+(st?`<section><h3>${t.styleTitle}: <span class="stylek">${t.styles[st.k]}</span> <small class="chnote">${st.n}${lang==="ko"?"전 기준":" runs"}</small></h3>${chartStyle(st)}<p class="chnote">${t.styleNote}</p></section>`:"")+(field.length>1?`<section><h3>${t.chField}</h3>${chartField(h,field)}</section>`:"")+(()=>{const pf=paceFit(name); if(!pf.fast.n&&!pf.even.n&&!pf.slow.n) return "";
+  const tlist=trialsFor(name,h&&h.hrNo); const ko2=lang==="ko";
+  const trialSec=tlist.length?`<section><h3>${ko2?"주행심사 기록 (800m)":"Qualifying trials (800 m)"}</h3><div class="tbl"><table class="trtbl"><thead><tr><th>${ko2?"일자":"Date"}</th><th>${ko2?"사유":"Reason"}</th><th>${ko2?"결과":"Result"}</th><th class="n">${ko2?"기록":"Time"}</th><th class="n">${ko2?"기준 대비":"vs 1:10.0"}</th><th class="n">${ko2?"순위":"Pos"}</th><th class="n">S1F</th><th class="n">G1F</th></tr></thead><tbody>${
+      tlist.map(x=>`<tr class="${x.pass==="합격"?"ok":"ng"}"><td>${fmtD8(x.date)}</td><td>${esc(trWhy(x.why))}</td><td>${x.pass==="합격"?(ko2?"합격":"Pass"):`<b>${ko2?x.pass:"Fail"}</b>${x.fail?` · ${esc(trFail(x.fail))}`:""}`}</td><td class="n">${fmtSec(x.time)}</td><td class="n">${x.time?((TRIAL_STD-x.time>=0?"−":"+")+Math.abs(TRIAL_STD-x.time).toFixed(1)):"–"}</td><td class="n">${x.ord?`${x.ord}/${x.field}`:esc(x.ordTxt)}</td><td class="n">${x.s1f?x.s1f.toFixed(1):"–"}</td><td class="n">${x.g1f?x.g1f.toFixed(1):"–"}</td></tr>`).join("")}</tbody></table></div>
+      <p class="chnote">${ko2?"주행심사는 경주에 나오기 전 800m를 1분 10.0초 안에 달려야 하는 자격 심사입니다. 신마와 120일 이상 쉰 말, 심판이 지정한 말이 받습니다.":"The qualifying trial is an 800 m test a horse must run inside 1:10.0 before it may race. New horses, horses off for 120+ days and horses named by the stewards must pass it."}</p></section>`:"";
+  return head+`<section><h3>${t.chForm}</h3>${chartForm(rs)}</section>`+trialSec+(st?`<section><h3>${t.styleTitle}: <span class="stylek">${t.styles[st.k]}</span> <small class="chnote">${st.n}${lang==="ko"?"전 기준":" runs"}</small></h3>${chartStyle(st)}<p class="chnote">${t.styleNote}</p></section>`:"")+(field.length>1?`<section><h3>${t.chField}</h3>${chartField(h,field)}</section>`:"")+(()=>{const pf=paceFit(name); if(!pf.fast.n&&!pf.even.n&&!pf.slow.n) return "";
       const cell=(k,lbl)=>`<div class="stat"><div class="k">${lbl}</div><div class="v">${pf[k].n?pf[k].avgFin.toFixed(1)+(lang==="ko"?"착":""):"–"}</div><div class="c">${pf[k].n?(lang==="ko"?`${pf[k].n}전 평균`:`avg of ${pf[k].n}`):(lang==="ko"?"기록 없음":"no runs")}</div></div>`;
       return `<section><h3>${lang==="ko"?"초반 페이스별 성적":"Record by early pace"}</h3><div class="stats">${cell("fast",lang==="ko"?"빠른 페이스":"Fast pace")}${cell("even",lang==="ko"?"보통":"Even")}${cell("slow",lang==="ko"?"느린 페이스":"Slow pace")}</div><p class="chnote">${lang==="ko"?"페이스 판정: 그 경주 선두마의 첫 200m(S1F) 시간이 같은 거리 중앙값보다 0.3초 이상 빠르면 빠름, 느리면 느림.":"Pace is judged from the leader's first 200 m (S1F) in that race: 0.3 s or more under the median for the distance is fast, over is slow."}</p></section>`;})()+`<section><h3>${t.chStats}</h3>${tiles}</section>`+
     (info?`<section><h3>${t.pedigree}</h3><div class="ped"><div class="pk">${t.sire}</div><div>${esc(info.fhrNm)}</div><div class="pk">${t.dam}</div><div>${esc(info.mhrNm)} <span class="ps">(${t.damsire} ${esc(info.mhrFhrNm)})</span></div></div><p class="chnote">${t.born} ${fdate(info.birthDt)} · ${t.debut} ${fdate(info.fdebutDt)} · ${lang==="ko"?info.color:(COLOR[info.color]||info.color)}</p></section>`:"");
@@ -1570,7 +1575,18 @@ function buildStory(field,race){
   }
   /* 4. 주의할 점 */
   const w=[];
-  const debut=field.filter(h=>h.recAll[0]===0); if(debut.length) w.push(ko?`기록이 없는 신마: ${nm(debut.map(h=>({h})))}. ${glBtn("trial","주행심사")}는 통과했지만 실전 경험이 없습니다.`:`Debutants with no race record: ${nm(debut.map(h=>({h})))}. They have passed the ${glBtn("trial","qualifying trial")} but have never raced.`);
+  const debut=field.filter(h=>h.recAll[0]===0);
+  if(debut.length){
+    const tl=debut.map(h=>{const tr=trialsFor(h.hrnm,h.hrNo).find(x=>x.pass==="합격"&&x.time>0); if(!tr) return null; const m=TRIAL_STD-tr.time;
+      return ko?`${chipBtn("horse",h.hrnm)} ${fmtD8(tr.date)} 심사 800m ${fmtSec(tr.time)}(기준 1:10.0보다 ${m.toFixed(1)}초 빠름, ${tr.field}두 중 ${tr.ordTxt}위, 막판 200m ${tr.g1f.toFixed(1)}초)`
+               :`${chipBtn("horse",h.hrnm)} trialled ${fmtD8(tr.date)}: 800 m in ${fmtSec(tr.time)} (${m.toFixed(1)} s inside the 1:10.0 standard, ${ordEn(tr.ord||0)} of ${tr.field}, last 200 m ${tr.g1f.toFixed(1)} s)`;}).filter(Boolean);
+    w.push((ko?`기록이 없는 신마: ${nm(debut.map(h=>({h})))}. ${glBtn("trial","주행심사")}는 통과했지만 실전 경험이 없습니다.`:`Debutants with no race record: ${nm(debut.map(h=>({h})))}. They have passed the ${glBtn("trial","qualifying trial")} but have never raced.`)
+      +(tl.length?(ko?` 심사 기록: ${tl.join("; ")}.`:` Trial form: ${tl.join("; ")}.`):""));
+  }
+  // 휴양 후 복귀·재심사: 최근 60일 안에 재심사를 거친 출전마
+  const recent=field.map(h=>({h,tr:trialsFor(h.hrnm,h.hrNo)[0]})).filter(x=>x.tr&&x.h.recAll[0]>0&&/\(재\)/.test(x.tr.why));
+  if(recent.length) w.push(ko?`재심사를 거쳐 나오는 말: ${recent.map(x=>`${chipBtn("horse",x.h.hrnm)} (${fmtD8(x.tr.date)} ${trWhy(x.tr.why)}, ${x.tr.pass}${x.tr.time?` ${fmtSec(x.tr.time)}`:""})`).join(", ")}.`
+                               :`Back via a re-trial: ${recent.map(x=>`${chipBtn("horse",x.h.hrnm)} (${fmtD8(x.tr.date)} ${trWhy(x.tr.why)}, ${x.tr.pass==="합격"?"passed":"failed"}${x.tr.time?` in ${fmtSec(x.tr.time)}`:""})`).join(", ")}.`);
   if(unrated&&set){ const ap=field.filter(h=>h.wgt&&h.wgt<55); if(ap.length) w.push(ko?`55kg 미만을 지는 말: ${ap.map(h=>`${chipBtn("horse",h.hrnm)} ${h.wgt}kg`).join(", ")} — ${glBtn("apprentice","수습기수")} 감량으로 보입니다.`:`Carrying under 55 kg: ${ap.map(h=>`${chipBtn("horse",h.hrnm)} ${h.wgt} kg`).join(", ")} — this points to an ${glBtn("apprentice","apprentice")} claiming an allowance.`); }
   const none=field.filter(h=>h.recAll[0]>0&&!runHist(h.hrnm).length); if(none.length&&none.length<n) w.push(ko?`최근 기록 데이터에 경주가 없는 말: ${nm(none.map(h=>({h})))}. 쉬었다 나왔을 수 있습니다.`:`No run in the recent data for: ${nm(none.map(h=>({h})))}. They may be returning from a break.`);
   const bl=field.filter(h=>h.bleed&&h.bleed.length); if(bl.length) w.push(ko?`폐출혈 기록이 확인된 말: ${nm(bl.map(h=>({h})))}.`:`Bleeding record on file: ${nm(bl.map(h=>({h})))}.`);
@@ -1625,6 +1641,18 @@ function renderStory(field){
 /* ---- 전개(구간 통과 순위) ---- */
 const toPace=a=>({date:a[0],no:a[1],hrnm:a[2],hrNo:a[3],gate:a[4],ord:a[5],s1f:a[6],c2:a[7],c3:a[8],c4:a[9],g1f:a[10],time:a[11],win:a[12],plc:a[13],diff:a[14],bw:a[15],dist:a[16],raw:a[17]});
 let pace=PACE_SAMPLE.map(toPace);
+/* 주행심사(800m) 기록: 합격·불합격, 불합격 사유, 심사 사유, 기록·구간 */
+let trials=[];
+const TRIAL_STD=70.0;   // 2026년 주행심사 합격 기준 800m 1:10.0
+const toTrial=r=>({date:String(r.trainDate),no:+r.trainNo||0,hrnm:r.hrName,hrNo:String(r.hrNo||""),ord:typeof r.ord==="number"?r.ord:(parseInt(r.ord)||null),ordTxt:String(r.ord),
+  pass:r.passFlag,why:r.reason,fail:r.nopassReason&&r.nopassReason!=="-"?r.nopassReason:"",time:+r.rcTime||0,s1f:+r.rcTimeS1f||0,g1f:+r.rcTimeG1f||0,jck:r.jkName,trar:r.trName,track:r.track,field:0});
+function trialsFor(name,no){ return trials.filter(x=>x.hrnm===name||(no&&x.hrNo===String(no))).sort((a,b)=>a.date<b.date?1:a.date>b.date?-1:a.no-b.no); }
+const TRIAL_WHY={"주행미합(신)":["신마 첫 심사","first trial (new horse)"],"장기휴양(재)":["장기 휴양 후 재심사","re-trial after a long break"],"장기휴양도래(재)":["휴양 120일 도래 재심사","re-trial on reaching 120 days off"],"주행지정(재)":["심판 지정 재심사","re-trial ordered by stewards"]};
+const TRIAL_FAIL={"능력미달":["능력 미달","too slow"],"주행불량":["주행 불량","poor running"],"발진불량":["발진 불량","poor break"],"출발불량":["출발 불량","poor start"],"진입불량":["게이트 진입 불량","refused to load"],"기수변경불가":["기수 변경 불가","jockey change refused"]};
+const trWhy=w=>{const k=Object.keys(TRIAL_WHY).find(k=>String(w).startsWith(k.replace(/\(.*/,"")) && String(w).includes(k.match(/\((.*)\)/)[1])); return k?TRIAL_WHY[k][lang==="ko"?0:1]:String(w||"");};
+const trFail=f=>TRIAL_FAIL[f]?TRIAL_FAIL[f][lang==="ko"?0:1]:f;
+const fmtSec=t=>t?`${Math.floor(t/60)}:${(t%60).toFixed(1).padStart(4,"0")}`:"–";
+const fmtD8=d=>`${d.slice(4,6)}.${d.slice(6,8)}`;
 const paceKey=(d,no)=>`${d}|${no}`;
 function paceFor(dateSlash,no){ const d=dateSlash.replace(/\//g,""); return pace.filter(p=>String(p.date)===d&&p.no==no); }
 function paceOf(dateSlash,no,hrnm){ return paceFor(dateSlash,no).find(p=>p.hrnm===hrnm); }
@@ -1768,12 +1796,14 @@ const ING={
   trainers:it=>it.forEach(a=>trs.set(a.trName,{n:+a.rcCntT,w:+a.ord1CntT,s:+a.ord2CntT,t:+a.ord3CntT,wr:+a.winRateTsum,qr:+a.quRateTsum})),
   horses:it=>addInfo(it),
   pace:it=>{const add=it.map(r=>toPace([r.rcDate,r.rcNo,r.hrName,r.hrNo,r.chulNo,r.ord,r.sjS1fOrd,r.sj_2cOrd,r.sj_3cOrd,r.sj_4cOrd,r.sjG1fOrd,r.rcTime,r.winOdds,r.plcOdds,String(r.diffUnit),r.wgHr,r.rcDist,{wgHr:r.wgHr,wgBudam:r.wgBudam,jkName:r.jkName,rank:r.rank,rcName:r.rcName,budam:r.budam,track:r.track,rating:r.rating,rcDist:r.rcDist,s1fT:+r.jeS1fTime||0,g1fT:+r.jeG1fTime||0,c4T:+r.je_4cTime||0}])); const keys=new Set(add.map(p=>`${p.date}|${p.no}`)); pace=pace.filter(p=>!keys.has(`${p.date}|${p.no}`)).concat(add);},
-  sheet:it=>{const ds=sheetToDays(it); ds.forEach(putDay); useDay(pickDefaultDay());}
+  sheet:it=>{const ds=sheetToDays(it); ds.forEach(putDay); useDay(pickDefaultDay());},
+  trial:it=>{const add=it.map(toTrial); const keys=new Set(add.map(x=>`${x.date}|${x.no}|${x.hrnm}`)); trials=trials.filter(x=>!keys.has(`${x.date}|${x.no}|${x.hrnm}`)).concat(add);
+    const by=new Map(); trials.forEach(x=>{const k=`${x.date}|${x.no}`; by.set(k,(by.get(k)||0)+1);}); trials.forEach(x=>x.field=by.get(`${x.date}|${x.no}`));}
 };
-function kindOf(it){ const a=it[0]||{}; if("sjS1fOrd" in a) return "pace"; if("chulNo" in a&&"hrNameEn" in a) return "sheet";
+function kindOf(it){ const a=it[0]||{}; if("passFlag" in a&&"trainDate" in a) return "trial"; if("sjS1fOrd" in a) return "pace"; if("chulNo" in a&&"hrNameEn" in a) return "sheet";
   if(a.trName&&a.winRateTsum!=null) return "trainers"; if(a.jkName&&a.winRateTsum!=null) return "jockeys";
   if(a.hrEngNm!=null) return "horses"; if("chak" in a) return "results"; if("jckyNm" in a) return "runs"; if("hrnm" in a) return "reg"; return "races"; }
-const LOADMSG={pace:"loadedPace",sheet:"loadedSheetN",races:"loaded",reg:"loadedReg",runs:"loadedRun",results:"loadedRes",jockeys:"loadedJk",trainers:"loadedTr",horses:"loadedInfo"};
+const LOADMSG={trial:"loadedTrial",pace:"loadedPace",sheet:"loadedSheetN",races:"loaded",reg:"loadedReg",runs:"loadedRun",results:"loadedRes",jockeys:"loadedJk",trainers:"loadedTr",horses:"loadedInfo"};
 function ingestText(raw){
   raw=raw.trim(); const t=T[lang];
   if(raw.startsWith("<")){
@@ -1784,7 +1814,7 @@ function ingestText(raw){
   const j=JSON.parse(raw);
   if(j.bundle){
     MODEL=j.model&&j.model.races?j.model:null;
-    const parts=[]; ["sheet","results","pace","jockeys","trainers","horses","races","reg","runs"].forEach(k=>{const it=j[k]; if(Array.isArray(it)&&it.length){ING[k](it); parts.push(`${t.bundleNames[k]} ${it.length}`);}});
+    const parts=[]; ["sheet","results","pace","trial","jockeys","trainers","horses","races","reg","runs"].forEach(k=>{const it=j[k]; if(Array.isArray(it)&&it.length){ING[k](it); parts.push(`${t.bundleNames[k]} ${it.length}`);}});
     if(!parts.length) throw 0;
     const n=resultsFromPace(); if(n) parts.push((lang==="ko"?"구간 기록에서 결과 ":"results from sectionals ")+n); return t.loadedBundle(j.race_dt,parts.join(" · "));
   }

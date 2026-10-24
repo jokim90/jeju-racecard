@@ -46,6 +46,7 @@ ENDPOINTS = {
     "runs":     ("API315/textDataHoldJePtinInfo", "json"),  # 제주출전마
     "results":  ("jejuhorseresult/getjejuhorseresult", "json"),  # 제주경주마 경주성적
     "pace":     ("API4_3/raceResult_3", "json"),             # 전국 경주기록 (구간 통과 순위, 배당)
+    "trial":    ("API20_1/ridingTestResult_1", "json"),      # 주행심사 결과정보 (최근 한 달, 합격·불합격·기록)
     "horse":    ("API42_1/totalHorseInfo_1", "xml"),         # 마필종합정보
     "jockeys":  ("jktresult/getjktresult", "xml"),           # 기수통산전적
     "trainers": ("trtresult/gettrtresult", "xml"),           # 조교사통산전적
@@ -193,6 +194,14 @@ def main():
             errors.append(str(e)); break
     print(f"· 구간 기록: {len(want)}일 새로 받음 ({got}건), 합계 {len(pace)}건")
     bundle["pace"] = pace
+    # 주행심사: 최근 한 달 치를 받아 캐시와 합친다(제주만)
+    new_tr = step("주행심사", lambda: fetch_all(a.key, "trial", {"meet": MEET_JEJU}, max_pages=5))
+    tkey = lambda r: f"{r.get('trainDate','')}|{r.get('trainNo','')}|{r.get('hrNo') or r.get('hrName')}"
+    tm = {tkey(r): r for r in (cache.get("trial") or [])}
+    for r in new_tr:
+        if str(r.get("meet", "제주")) in ("제주", "2"):
+            tm[tkey(r)] = r
+    bundle["trial"] = sorted(tm.values(), key=lambda r: (str(r.get("trainDate", "")), int(r.get("trainNo") or 0)), reverse=True)
     bundle["jockeys"] = step("기수 통산성적", lambda: fetch_all(a.key, "jockeys", {"meet": MEET_JEJU}))
     bundle["trainers"] = step("조교사 통산성적", lambda: fetch_all(a.key, "trainers", {"meet": MEET_JEJU}))
 
