@@ -47,7 +47,7 @@ ENDPOINTS = {
     "results":  ("jejuhorseresult/getjejuhorseresult", "json"),  # 제주경주마 경주성적
     "pace":     ("API4_3/raceResult_3", "json"),             # 전국 경주기록 (구간 통과 순위, 배당)
     "trial":    ("API20_1/ridingTestResult_1", "json"),      # 주행심사 결과정보 (최근 한 달, 합격·불합격·기록)
-    "work":     (os.environ.get("JEJU_WORK_PATH", ""), "json"),  # 일일 조교 현황 (호출 경로 확인 후 입력: 예 "APIxx_1/xxx_1")
+    "work":     ("API18_1/dailyTraining_1", "json"),        # 일일 훈련현황 (meet=2 제주, 최근 약 한 달)
     "horse":    ("API42_1/totalHorseInfo_1", "xml"),         # 마필종합정보
     "jockeys":  ("jktresult/getjktresult", "xml"),           # 기수통산전적
     "trainers": ("trtresult/gettrtresult", "xml"),           # 조교사통산전적
