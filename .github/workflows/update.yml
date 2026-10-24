@@ -42,7 +42,7 @@ jobs:
         run: |
           DT="${{ github.event.inputs.race_dt }}"
           [ -z "$DT" ] && DT=$(date +%Y%m%d)
-          python collector/jeju_collect.py "$DT" --out /tmp/new.json
+          python collector/jeju_collect.py "$DT" --cache-from site/latest.json --out /tmp/new.json
 
       - name: 받은 데이터가 비어 있지 않을 때만 교체
         if: github.event_name != 'push'
@@ -50,7 +50,7 @@ jobs:
           python - <<'EOF'
           import json, shutil, sys
           j = json.load(open("/tmp/new.json", encoding="utf-8"))
-          n = sum(len(j.get(k) or []) for k in ("sheet", "races", "results"))
+          n = sum(len(j.get(k) or []) for k in ("sheet", "results"))
           if n == 0:
               print("::warning::새로 받은 데이터가 비어 있어 기존 latest.json을 유지합니다.")
               sys.exit(0)

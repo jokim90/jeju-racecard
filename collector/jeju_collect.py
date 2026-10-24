@@ -15,6 +15,9 @@
     # 경주 결과 이력을 최대 몇 페이지까지 받을지 지정 (기본 20페이지 = 2,000건)
     python3 jeju_collect.py 20240817 --result-pages 50
 
+    # 이전 묶음을 캐시로 써서 새 데이터만 받기 (권장, 호출 수 대폭 감소)
+    python3 jeju_collect.py 20240817 --cache-from site/latest.json --out site/latest.json
+
     # 마필종합정보 조회를 건너뛰기 (트래픽 절약)
     python3 jeju_collect.py 20240817 --no-horses
 
@@ -40,8 +43,6 @@ PAUSE = 0.15  # 호출 사이 대기(초). 초당 호출 제한(오류 23)을 �
 
 ENDPOINTS = {
     "sheet":    ("API26_2/entrySheet_2", "json"),           # 출전표 (시행 예정 경주, 최근 한 달)
-    "races":    ("API312/textDataHoldJeRaceInfo", "json"),  # 제주경주정보
-    "reg":      ("API324/textDataHoldJeRegInfo",  "json"),  # 제주출전등록
     "runs":     ("API315/textDataHoldJePtinInfo", "json"),  # 제주출전마
     "results":  ("jejuhorseresult/getjejuhorseresult", "json"),  # 제주경주마 경주성적
     "pace":     ("API4_3/raceResult_3", "json"),             # 전국 경주기록 (구간 통과 순위, 배당)
@@ -124,6 +125,7 @@ def main():
     ap.add_argument("--no-horses", action="store_true", help="마필종합정보 조회 생략")
     ap.add_argument("--key", default=os.environ.get("JEJU_API_KEY"), help="인증키 (기본: 환경변수 JEJU_API_KEY)")
     ap.add_argument("--out", help="저장할 파일 이름")
+    ap.add_argument("--cache-from", help="이전 묶음 파일: 이미 받은 경주성적·구간 기록·마필정보는 다시 받지 않음")
     ap.add_argument("--results-only", action="store_true", help="경주성적·구간 기록만 받기 (빠른 갱신)")
     ap.add_argument("--merge-into", help="기존 묶음 파일: 여기에 결과·구간을 합쳐서 저장")
     ap.add_argument("--only-race-days", action="store_true", help="오늘(경주일자)에 경주가 없으면 아무것도 하지 않음 (종료 코드 3)")
@@ -153,31 +155,64 @@ def main():
 
     bundle["sheet"] = step("출전표 (예정 경주)", lambda: fetch_all(a.key, "sheet", {"meet": MEET_JEJU}, max_pages=10))
     d = {"race_dt": a.race_dt}
-    bundle["races"] = step("경주정보", lambda: fetch_all(a.key, "races", d))
-    bundle["reg"] = step("출전등록", lambda: fetch_all(a.key, "reg", d, max_pages=3))
-    bundle["runs"] = step("출전마", lambda: fetch_all(a.key, "runs", d, max_pages=3))
-    bundle["results"] = step("경주성적 이력", lambda: fetch_all(a.key, "results", {}, max_pages=a.result_pages))
-    # 구간 기록: 경주성적에 나온 경주일마다 한 번씩 호출
-    dates = sorted({str(r.get("rcDate", "")).replace("/", "") for r in bundle["results"] if r.get("gbn") == "R"})
-    pace = []
-    for d8 in dates:
+    # 경주정보(API312)·출전등록(API324)은 출전표(API26_2)·구간기록(API4_3)과 내용이 겹쳐 받지 않는다
+    bundle["runs"] = step("출전마 (장구·진료)", lambda: fetch_all(a.key, "runs", d, max_pages=3))
+
+    # 이전 묶음(캐시): 이미 받은 경주성적·구간 기록·마필정보는 다시 받지 않는다
+    cache = {}
+    if a.cache_from and os.path.exists(a.cache_from):
         try:
-            pace.extend(fetch_all(a.key, "pace", {"meet": MEET_JEJU, "rc_date": d8}, max_pages=2))
+            with open(a.cache_from, encoding="utf-8") as f:
+                cache = json.load(f)
+            print(f"· 캐시: {a.cache_from} (결과 {len(cache.get('results') or [])} · 구간 {len(cache.get('pace') or [])} · 마필 {len(cache.get('horses') or [])})")
+        except Exception as e:
+            print(f"· 캐시를 읽지 못해 처음부터 받습니다 ({e})")
+
+    # 경주성적: API가 최근 약 한 달 치만 주므로 전부 받고, 캐시의 지난 기록과 합쳐 이력을 계속 쌓는다
+    new_res = step("경주성적 (최근)", lambda: fetch_all(a.key, "results", {}, max_pages=a.result_pages))
+    rkey = lambda r: f"{str(r.get('rcDate','')).replace('/','')}|{r.get('gbn','')}|{r.get('rcNo','')}|{r.get('hrNo') or r.get('hrName')}"
+    merged = {rkey(r): r for r in (cache.get("results") or [])}
+    before = len(merged)
+    for r in new_res:
+        merged[rkey(r)] = r
+    bundle["results"] = sorted(merged.values(), key=lambda r: (str(r.get("rcDate", "")), int(r.get("rcNo") or 0)), reverse=True)
+    print(f"  합계 {len(bundle['results'])}건 (새로 {len(merged) - before}건)")
+
+    # 구간 기록: 캐시에 없는 경주일 + 최근 2개 경주일(사후 정정 반영)만 새로 받는다
+    dates = sorted({str(r.get("rcDate", "")).replace("/", "") for r in bundle["results"] if r.get("gbn") == "R"})
+    have = {str(p.get("rcDate", "")) for p in (cache.get("pace") or [])}
+    refresh = set(dates[-2:])
+    want = [d8 for d8 in dates if d8 not in have or d8 in refresh]
+    pace = [p for p in (cache.get("pace") or []) if str(p.get("rcDate", "")) not in want]
+    got = 0
+    for d8 in want:
+        try:
+            rows = fetch_all(a.key, "pace", {"meet": MEET_JEJU, "rc_date": d8}, max_pages=2)
+            pace.extend(rows); got += len(rows)
         except ApiError as e:
             errors.append(str(e)); break
-    print(f"· 구간 기록 ({len(dates)}일) ... {len(pace)}건")
+    print(f"· 구간 기록: {len(want)}일 새로 받음 ({got}건), 합계 {len(pace)}건")
     bundle["pace"] = pace
     bundle["jockeys"] = step("기수 통산성적", lambda: fetch_all(a.key, "jockeys", {"meet": MEET_JEJU}))
     bundle["trainers"] = step("조교사 통산성적", lambda: fetch_all(a.key, "trainers", {"meet": MEET_JEJU}))
 
     horses = []
-    if not a.no_horses:
+    if a.no_horses:
+        horses = list(cache.get("horses") or [])
+    else:
         # 경주성적에 나온 마번 + 출전마 마명으로 마필종합정보 조회
         nos = {str(r.get("hrNo")) for r in bundle["results"] if r.get("hrNo")}
         nos |= {str(r.get("hrNo")) for r in bundle["sheet"] if r.get("hrNo")}
         names = {r.get("hrnm") for r in bundle["runs"] if r.get("hrnm")}
-        print(f"· 마필종합정보 (마번 {len(nos)}두, 출전마 {len(names)}두) ...", flush=True)
-        seen = set()
+        # 혈통·생년월일 등은 바뀌지 않으므로 캐시에 있는 말은 건너뛴다
+        cached = [h for h in (cache.get("horses") or []) if h.get("hrNo")]
+        horses.extend(cached)
+        known_no = {str(h.get("hrNo")) for h in cached}
+        known_nm = {h.get("hrNm") for h in cached}
+        nos -= known_no
+        names -= known_nm
+        print(f"· 마필종합정보 (캐시 {len(cached)}두, 새로 조회: 마번 {len(nos)}두 · 출전마 {len(names)}두) ...", flush=True)
+        seen = set(known_no)
         targets = [("hr_no", n) for n in sorted(nos)] + [("hr_name", n) for n in sorted(names)]
         for i, (k, v) in enumerate(targets, 1):
             try:
@@ -193,7 +228,7 @@ def main():
                     horses.append(h)
             if i % 25 == 0:
                 print(f"  {i}/{len(targets)}", flush=True)
-        print(f"  완료: {len(horses)}두")
+        print(f"  완료: 합계 {len(horses)}두 (새로 {len(horses) - len(cached)}두)")
     bundle["horses"] = horses
 
     out = a.out or f"jeju_bundle_{a.race_dt}.json"
