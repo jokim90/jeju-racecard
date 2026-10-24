@@ -47,6 +47,7 @@ ENDPOINTS = {
     "results":  ("jejuhorseresult/getjejuhorseresult", "json"),  # 제주경주마 경주성적
     "pace":     ("API4_3/raceResult_3", "json"),             # 전국 경주기록 (구간 통과 순위, 배당)
     "trial":    ("API20_1/ridingTestResult_1", "json"),      # 주행심사 결과정보 (최근 한 달, 합격·불합격·기록)
+    "work":     (os.environ.get("JEJU_WORK_PATH", ""), "json"),  # 일일 조교 현황 (호출 경로 확인 후 입력: 예 "APIxx_1/xxx_1")
     "horse":    ("API42_1/totalHorseInfo_1", "xml"),         # 마필종합정보
     "jockeys":  ("jktresult/getjktresult", "xml"),           # 기수통산전적
     "trainers": ("trtresult/gettrtresult", "xml"),           # 조교사통산전적
@@ -202,6 +203,19 @@ def main():
         if str(r.get("meet", "제주")) in ("제주", "2"):
             tm[tkey(r)] = r
     bundle["trial"] = sorted(tm.values(), key=lambda r: (str(r.get("trainDate", "")), int(r.get("trainNo") or 0)), reverse=True)
+    # 일일 조교: 최근 약 한 달(하루 수백 건). 필요한 필드만 남기고 최근 45일만 보관
+    if ENDPOINTS["work"][0]:
+        new_w = step("일일 조교", lambda: fetch_all(a.key, "work", {"meet": MEET_JEJU}, max_pages=80))
+        slim = lambda r: {k: r.get(k) for k in ("trDate", "hrNo", "hrName", "trTerm", "prGubun", "prNo", "stTime", "chulGubun")}
+        wkey = lambda r: f"{r.get('trDate')}|{r.get('hrNo')}|{r.get('stTime')}"
+        wm = {wkey(r): r for r in (cache.get("work") or [])}
+        for r in new_w:
+            if str(r.get("meet", "제주")) in ("제주", "2"):
+                wm[wkey(r)] = slim(r)
+        cutoff = int(time.strftime("%Y%m%d", time.localtime(time.time() - 45 * 86400)))
+        bundle["work"] = sorted((r for r in wm.values() if int(r.get("trDate") or 0) >= cutoff), key=lambda r: (int(r.get("trDate") or 0), str(r.get("stTime"))), reverse=True)
+    elif cache.get("work"):
+        bundle["work"] = cache["work"]
     bundle["jockeys"] = step("기수 통산성적", lambda: fetch_all(a.key, "jockeys", {"meet": MEET_JEJU}))
     bundle["trainers"] = step("조교사 통산성적", lambda: fetch_all(a.key, "trainers", {"meet": MEET_JEJU}))
 
