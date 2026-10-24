@@ -44,7 +44,8 @@ jobs:
           sig() { python - <<'EOF'
           import json,hashlib
           j=json.load(open("site/latest.json",encoding="utf-8"))
-          print(hashlib.md5(json.dumps([j.get("results"),j.get("pace")],ensure_ascii=False,sort_keys=True).encode()).hexdigest())
+          rows=sorted(json.dumps(x,ensure_ascii=False,sort_keys=True) for x in (j.get("results") or [])+(j.get("pace") or []))
+          print(hashlib.md5("\n".join(rows).encode()).hexdigest())
           EOF
           }
           finished() { python - "$DT" <<'EOF'
