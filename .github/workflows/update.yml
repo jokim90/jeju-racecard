@@ -17,6 +17,7 @@ permissions:
   contents: write
   pages: write
   id-token: write
+  actions: write
 
 concurrency:
   group: pages
@@ -50,11 +51,18 @@ jobs:
           python - <<'EOF'
           import json, shutil, sys
           j = json.load(open("/tmp/new.json", encoding="utf-8"))
-          n = sum(len(j.get(k) or []) for k in ("sheet", "results"))
-          if n == 0:
-              print("::warning::새로 받은 데이터가 비어 있어 기존 latest.json을 유지합니다.")
+          old = json.load(open("site/latest.json", encoding="utf-8"))
+          if not j.get("sheet") and old.get("sheet"):
+              # 출전표를 못 받았으면(키 오류·API 장애) 아무것도 덮어쓰지 않는다
+              print("::error::출전표를 받지 못했습니다(API 키 또는 공공데이터포털 오류). 기존 latest.json을 유지합니다.")
               sys.exit(0)
-          shutil.copy("/tmp/new.json", "site/latest.json")
+          # 이번에 비어 온 항목은 이전 값을 그대로 둔다 (일부 API만 실패한 경우)
+          for k, v in old.items():
+              if isinstance(v, list) and v and not j.get(k):
+                  print(f"::warning::{k} 수집 실패, 이전 값 {len(v)}건 유지"); j[k] = v
+          key = lambda p: (str(p.get("rcDate")), str(p.get("rcNo")), str(p.get("hrNo") or p.get("hrName")))
+          m = {key(p): p for p in old.get("pace") or []}; m.update({key(p): p for p in j.get("pace") or []}); j["pace"] = list(m.values())
+          json.dump(j, open("site/latest.json", "w", encoding="utf-8"), ensure_ascii=False)
           print("latest.json 교체:", {k: len(v) for k, v in j.items() if isinstance(v, list)})
           EOF
 
@@ -83,6 +91,14 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site
+
+      - name: 경주일이면 실시간 결과 루프 시작 (예약 실행이 빠져도 아침 갱신 뒤 바로 이어지도록)
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          H=$(date +%H%M)
+          if [ "$H" -lt 1900 ]; then gh workflow run live.yml --ref main && echo "live.yml 실행 요청"; fi
 
   deploy:
     needs: update

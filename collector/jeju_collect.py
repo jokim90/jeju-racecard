@@ -295,7 +295,8 @@ def quick_results(a):
     # 구간 기록: 오늘 + 새 결과에 나온 날짜 중 아직 구간 기록이 없는 날
     have = {str(p.get("rcDate", "")) for p in (base.get("pace") or [])}
     want = {a.race_dt} | {str(r.get("rcDate", "")).replace("/", "") for r in new_res if r.get("gbn") == "R"}
-    pace = [p for p in (base.get("pace") or []) if str(p.get("rcDate", "")) != a.race_dt]  # 오늘 것은 새로 받음
+    old_pace = base.get("pace") or []
+    pace = [p for p in old_pace if str(p.get("rcDate", "")) != a.race_dt]  # 오늘 것은 새로 받음
     got = 0
     for d8 in sorted(want):
         if d8 != a.race_dt and d8 in have:
@@ -305,6 +306,9 @@ def quick_results(a):
             pace.extend(rows); got += len(rows)
         except ApiError as e:
             errors.append(str(e)); break
+    if not any(str(p.get("rcDate", "")) == a.race_dt for p in pace):
+        # 오늘 구간 기록을 못 받았으면(오류·지연) 이미 있던 오늘 기록을 지우지 않는다
+        pace.extend(p for p in old_pace if str(p.get("rcDate", "")) == a.race_dt)
     print(f"· 구간 기록 ... {got}건 (오늘 {a.race_dt} 포함)")
 
     bundle = dict(base) if base else {"bundle": 1, "sheet": [], "races": [], "reg": [], "runs": [], "jockeys": [], "trainers": [], "horses": []}
@@ -318,6 +322,9 @@ def quick_results(a):
         print("\n확인이 필요한 오류:")
         for e in dict.fromkeys(errors):
             print("  -", e)
+    if errors and not new_res and not got:
+        # 전부 실패(키 오류 등): 파일은 원래 내용 그대로라 커밋되지 않는다
+        sys.exit(4)
     if not new_res and not got:
         sys.exit(2)
 

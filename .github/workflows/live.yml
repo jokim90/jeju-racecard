@@ -1,22 +1,23 @@
 name: 경주일 실시간 결과 갱신
 
-# 경주일(출전표에 오늘 경주가 있는 날)에만 10분 간격으로 결과·구간 기록을 받아 latest.json에 합치고 사이트를 다시 배포합니다.
-# 경주가 없는 날은 수집기가 종료 코드 3으로 바로 끝나고 배포하지 않습니다. GitHub 예약 실행은 몇 분 늦어질 수 있습니다.
+# GitHub 예약 실행은 붐빌 때 몇 시간씩 밀리거나 빠지므로(10분 간격 예약이 하루 1~3번만 실행됨),
+# 한 번 시작되면 작업 하나가 경주가 끝날 때까지 4분마다 직접 수집하는 루프로 돈다.
+# 시작 경로: ① 예약(여러 개 중 하나만 걸려도 됨) ② 매일 아침 데이터 갱신이 끝나면 자동 호출 ③ 수동 실행 ④ .live-ping 푸시
+# 작업 한도(6시간)에 가까워지면 스스로 다시 실행을 건다. 경주가 없는 날은 바로 끝난다.
 on:
   schedule:
-    - cron: "*/10 1-10 * * 1,5,6,0"   # UTC 01:00~10:59 = 한국시간 10:00~19:59, 월·금·토·일
+    - cron: "*/20 0-9 * * 1,5,6,0"   # 한국시간 09:00~18:59, 월·금·토·일 (하나만 걸려도 루프가 이어짐)
   workflow_dispatch:
   push:
     branches: [main]
-    paths: [".live-ping"]        # 이 파일을 갱신해 푸시하면 즉시 한 번 수집 (예약 실행이 밀릴 때 수동/외부 트리거용)
+    paths: [".live-ping"]
 
 permissions:
   contents: write
-  pages: write
-  id-token: write
+  actions: write
 
 concurrency:
-  group: pages
+  group: live
   cancel-in-progress: false
 
 env:
@@ -25,51 +26,66 @@ env:
 jobs:
   live:
     runs-on: ubuntu-latest
-    outputs:
-      changed: ${{ steps.collect.outputs.changed }}
+    timeout-minutes: 350
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
-      - name: 결과·구간 기록만 빠르게 수집
-        id: collect
+      - name: 경주가 끝날 때까지 4분마다 결과·구간 기록 수집
         env:
           JEJU_API_KEY: ${{ secrets.JEJU_API_KEY }}
+          GH_TOKEN: ${{ github.token }}
         run: |
-          set +e
-          python collector/jeju_collect.py "$(date +%Y%m%d)" --results-only --merge-into site/latest.json --out site/latest.json --only-race-days
-          code=$?
-          set -e
-          if [ "$code" = "3" ]; then echo "오늘은 경주가 없습니다."; echo "changed=no" >> "$GITHUB_OUTPUT"; exit 0; fi
-          if [ "$code" != "0" ] && [ "$code" != "2" ]; then exit $code; fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add site/latest.json
-          if git diff --cached --quiet; then
-            echo "변경 없음"; echo "changed=no" >> "$GITHUB_OUTPUT"
-          else
-            git commit -m "실시간 결과 갱신 $(date '+%Y-%m-%d %H:%M')"
-            git pull --rebase origin main
-            git push
-            echo "changed=yes" >> "$GITHUB_OUTPUT"
-          fi
-
-      - uses: actions/configure-pages@v5
-        if: steps.collect.outputs.changed == 'yes'
-      - uses: actions/upload-pages-artifact@v3
-        if: steps.collect.outputs.changed == 'yes'
-        with:
-          path: site
-
-  deploy:
-    needs: live
-    if: needs.live.outputs.changed == 'yes'
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v4
+          START=$(date +%s); DT=$(date +%Y%m%d); DONE_STREAK=0
+          sig() { python - <<'EOF'
+          import json,hashlib
+          j=json.load(open("site/latest.json",encoding="utf-8"))
+          print(hashlib.md5(json.dumps([j.get("results"),j.get("pace")],ensure_ascii=False,sort_keys=True).encode()).hexdigest())
+          EOF
+          }
+          finished() { python - "$DT" <<'EOF'
+          import json,sys
+          d=sys.argv[1]; j=json.load(open("site/latest.json",encoding="utf-8"))
+          races={str(r.get("rcNo")) for r in j.get("sheet") or [] if str(r.get("rcDate","")).replace("/","")==d}
+          done={str(p.get("rcNo")) for p in j.get("pace") or [] if str(p.get("rcDate",""))==d}
+          print("yes" if races and races<=done else "no")
+          EOF
+          }
+          while :; do
+            NOW=$(date +%H%M)
+            if [ "$NOW" -ge 2010 ]; then echo "20:10 이후, 종료"; break; fi
+            if [ "$NOW" -lt 1050 ]; then
+              # 첫 경주 전에는 기다린다 (단, 경주가 없는 날이면 바로 끝냄)
+              git pull -q --rebase origin main || true
+              python - "$DT" <<'EOF' || { echo "오늘은 경주가 없습니다."; exit 0; }
+          import json,sys
+          j=json.load(open("site/latest.json",encoding="utf-8"))
+          sys.exit(0 if any(str(r.get("rcDate","")).replace("/","")==sys.argv[1] for r in j.get("sheet") or []) else 1)
+          EOF
+              sleep 300; continue
+            fi
+            git pull -q --rebase origin main || true
+            BEFORE=$(sig)
+            set +e
+            python collector/jeju_collect.py "$DT" --results-only --merge-into site/latest.json --out site/latest.json --only-race-days
+            code=$?
+            set -e
+            if [ "$code" = "3" ]; then echo "오늘은 경주가 없습니다."; git checkout -- site/latest.json; exit 0; fi
+            if [ "$code" != "0" ] && [ "$code" != "2" ]; then echo "::warning::수집 오류(코드 $code), 다음 회차에 다시 시도"; git checkout -- site/latest.json || true
+            elif [ "$(sig)" = "$BEFORE" ]; then echo "$(date +%H:%M) 새 결과 없음"; git checkout -- site/latest.json
+            else
+              git add site/latest.json
+              git commit -q -m "실시간 결과 갱신 $(date '+%Y-%m-%d %H:%M')"
+              git pull -q --rebase origin main && git push -q && gh workflow run deploy.yml --ref main && echo "$(date +%H:%M) 새 결과 반영·배포 요청"
+            fi
+            if [ "$(finished)" = "yes" ]; then DONE_STREAK=$((DONE_STREAK+1)); else DONE_STREAK=0; fi
+            if [ "$DONE_STREAK" -ge 3 ]; then echo "오늘 경주 결과가 모두 들어왔습니다. 종료"; break; fi
+            if [ $(( $(date +%s) - START )) -ge 19800 ]; then
+              echo "작업 한도에 가까워 다시 실행을 겁니다."; gh workflow run live.yml --ref main; break
+            fi
+            sleep 240
+          done
